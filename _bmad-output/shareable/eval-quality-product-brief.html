@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="The product boundary, customer need, differentiation, and validation scope.">
+  <title>Product Brief: eval-quality</title>
+  <style>
+  :root {
+    color-scheme: light;
+    --canvas: #f4f6fb;
+    --paper: #ffffff;
+    --ink: #182230;
+    --muted: #667085;
+    --line: #e4e7ec;
+    --brand: #3157d5;
+    --brand-deep: #243f9f;
+    --brand-soft: #eef2ff;
+    --accent: #087f6d;
+    --accent-soft: #eafaf6;
+    --code: #101828;
+    --shadow: 0 18px 50px rgba(16, 24, 40, 0.08);
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--canvas);
+    color: var(--ink);
+    font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 16px;
+    line-height: 1.72;
+    text-rendering: optimizeLegibility;
+  }
+
+  a { color: var(--brand); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+  a:hover { color: var(--brand-deep); }
+
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    border-bottom: 1px solid rgba(228, 231, 236, 0.9);
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(14px);
+  }
+
+  .topbar-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    max-width: 1280px;
+    min-height: 64px;
+    margin: 0 auto;
+    padding: 10px 28px;
+  }
+
+  .brand {
+    color: var(--ink);
+    font-size: 15px;
+    font-weight: 760;
+    letter-spacing: -0.01em;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .brand-mark { color: var(--brand); }
+  .nav { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
+  .nav-link {
+    border-radius: 9px;
+    color: #475467;
+    font-size: 13px;
+    font-weight: 650;
+    padding: 6px 10px;
+    text-decoration: none;
+  }
+  .nav-link:hover, .nav-link.active { background: var(--brand-soft); color: var(--brand-deep); }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 248px minmax(0, 900px);
+    gap: 30px;
+    max-width: 1230px;
+    margin: 34px auto 70px;
+    padding: 0 28px;
+  }
+
+  .sidebar {
+    position: sticky;
+    top: 90px;
+    align-self: start;
+    max-height: calc(100vh - 112px);
+    overflow: auto;
+    padding: 4px 8px 20px 0;
+  }
+
+  .toc-title {
+    margin: 0 0 10px 10px;
+    color: #98a2b3;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .toc-link {
+    display: block;
+    border-left: 2px solid transparent;
+    border-radius: 0 8px 8px 0;
+    color: #667085;
+    font-size: 13px;
+    line-height: 1.35;
+    margin: 1px 0;
+    padding: 6px 8px 6px 10px;
+    text-decoration: none;
+  }
+  .toc-link:hover { border-left-color: var(--brand); background: #fff; color: var(--brand-deep); }
+  .toc-link.depth-3 { padding-left: 22px; font-size: 12px; }
+
+  .paper {
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid rgba(228, 231, 236, 0.85);
+    border-radius: 18px;
+    background: var(--paper);
+    box-shadow: var(--shadow);
+  }
+
+  .hero {
+    border-bottom: 1px solid var(--line);
+    background: linear-gradient(145deg, #ffffff 20%, #f1f4ff 100%);
+    padding: 58px 64px 44px;
+  }
+  .eyebrow {
+    color: var(--brand);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+  }
+  .hero h1 {
+    max-width: 760px;
+    margin: 12px 0 12px;
+    color: #101828;
+    font-size: clamp(34px, 5vw, 54px);
+    line-height: 1.08;
+    letter-spacing: -0.04em;
+  }
+  .lede { max-width: 680px; margin: 0; color: #475467; font-size: 18px; line-height: 1.55; }
+  .metadata { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    border: 1px solid #d0d5dd;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.8);
+    color: #475467;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 3px 10px;
+  }
+  .pill.status { border-color: #a9e4d7; background: var(--accent-soft); color: var(--accent); }
+
+  .mobile-toc { display: none; margin: 26px 32px 0; }
+  .mobile-toc summary { color: var(--brand-deep); cursor: pointer; font-size: 14px; font-weight: 750; }
+  .mobile-toc-links { margin-top: 10px; }
+
+  .content { padding: 24px 64px 64px; }
+  .content h2, .content h3, .content h4 { position: relative; scroll-margin-top: 88px; color: #101828; }
+  .content h2 {
+    border-top: 1px solid var(--line);
+    margin: 52px 0 18px;
+    padding-top: 38px;
+    font-size: 29px;
+    line-height: 1.2;
+    letter-spacing: -0.025em;
+  }
+  .content h2:first-child { border-top: 0; margin-top: 14px; padding-top: 12px; }
+  .content h3 { margin: 34px 0 12px; font-size: 21px; line-height: 1.3; letter-spacing: -0.015em; }
+  .content h4 { margin: 28px 0 10px; font-size: 17px; line-height: 1.35; }
+  .heading-anchor {
+    opacity: 0;
+    margin-left: 8px;
+    color: #98a2b3;
+    font-size: 0.72em;
+    font-weight: 500;
+    text-decoration: none;
+  }
+  .content h2:hover .heading-anchor, .content h3:hover .heading-anchor { opacity: 1; }
+
+  .content p { margin: 0 0 18px; }
+  .content strong { color: #101828; }
+  .content ul, .content ol { margin: 0 0 20px; padding-left: 26px; }
+  .content li { margin: 7px 0; padding-left: 3px; }
+  .content li::marker { color: var(--brand); font-weight: 750; }
+  .content blockquote {
+    margin: 24px 0;
+    border-left: 4px solid var(--brand);
+    border-radius: 0 10px 10px 0;
+    background: var(--brand-soft);
+    color: #344054;
+    padding: 16px 20px;
+  }
+  .content blockquote p:last-child { margin-bottom: 0; }
+  .content hr { height: 1px; margin: 44px 0; border: 0; background: var(--line); }
+
+  code {
+    border: 1px solid #e4e7ec;
+    border-radius: 5px;
+    background: #f8fafc;
+    color: #344054;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    font-size: 0.88em;
+    padding: 0.14em 0.38em;
+  }
+  pre {
+    overflow: auto;
+    margin: 24px 0;
+    border: 1px solid #344054;
+    border-radius: 12px;
+    background: var(--code);
+    color: #e4e7ec;
+    line-height: 1.58;
+    padding: 20px 22px;
+  }
+  pre code { border: 0; background: transparent; color: inherit; font-size: 13px; padding: 0; }
+
+  .table-wrap { overflow-x: auto; margin: 24px 0 30px; border: 1px solid var(--line); border-radius: 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; line-height: 1.5; }
+  th { background: #f8fafc; color: #344054; font-size: 12px; letter-spacing: 0.04em; text-align: left; text-transform: uppercase; }
+  th, td { border-bottom: 1px solid var(--line); padding: 12px 14px; vertical-align: top; }
+  tr:last-child td { border-bottom: 0; }
+  tbody tr:hover { background: #fafbff; }
+
+  .footer {
+    border-top: 1px solid var(--line);
+    color: #98a2b3;
+    font-size: 12px;
+    padding: 24px 64px 30px;
+  }
+
+  @media (max-width: 920px) {
+    .layout { display: block; margin-top: 22px; padding: 0 16px; }
+    .sidebar { display: none; }
+    .mobile-toc { display: block; }
+    .hero { padding: 46px 36px 34px; }
+    .content { padding: 20px 36px 48px; }
+    .footer { padding-left: 36px; padding-right: 36px; }
+  }
+
+  @media (max-width: 620px) {
+    .topbar-inner { align-items: flex-start; flex-direction: column; gap: 6px; padding: 10px 16px; }
+    .nav { justify-content: flex-start; }
+    .hero { padding: 36px 24px 30px; }
+    .hero h1 { font-size: 34px; }
+    .lede { font-size: 16px; }
+    .content { padding: 14px 24px 42px; }
+    .mobile-toc { margin-left: 24px; margin-right: 24px; }
+    .footer { padding-left: 24px; padding-right: 24px; }
+  }
+
+  @media print {
+    @page { margin: 16mm 15mm; }
+    body { background: #fff; font-size: 10.5pt; }
+    .topbar, .sidebar, .mobile-toc, .heading-anchor { display: none !important; }
+    .layout { display: block; max-width: none; margin: 0; padding: 0; }
+    .paper { border: 0; border-radius: 0; box-shadow: none; }
+    .hero { padding: 0 0 10mm; background: #fff; }
+    .hero h1 { font-size: 28pt; }
+    .content { padding: 0; }
+    .content h2 { break-after: avoid; margin-top: 9mm; padding-top: 5mm; }
+    .content h3, .content h4 { break-after: avoid; }
+    pre, blockquote, .table-wrap { break-inside: avoid; }
+    .table-wrap { overflow: visible; }
+    a { color: inherit; text-decoration: none; }
+    .footer { padding: 8mm 0 0; }
+  }
+</style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="eval-quality-product-brief.html"><span class="brand-mark">eval</span>-quality</a>
+      <nav class="nav" aria-label="Companion documents"><a class="nav-link active" href="eval-quality-product-brief.html">Product brief</a><a class="nav-link" href="eval-quality-prd.html">PRD</a><a class="nav-link" href="eval-quality-hypothesis-validation.html">Hypothesis plan</a></nav>
+    </div>
+  </header>
+  <div class="layout">
+    <aside class="sidebar" aria-label="Table of contents">
+      <p class="toc-title">On this page</p>
+      <a class="toc-link depth-2" href="#current-decision-validate-before-building">Current Decision: Validate Before Building</a><a class="toc-link depth-2" href="#executive-summary">Executive Summary</a><a class="toc-link depth-2" href="#the-problem">The Problem</a><a class="toc-link depth-2" href="#the-solution">The Solution</a><a class="toc-link depth-2" href="#what-makes-this-different">What Makes This Different</a><a class="toc-link depth-2" href="#who-this-serves">Who This Serves</a><a class="toc-link depth-2" href="#success-criteria">Success Criteria</a><a class="toc-link depth-2" href="#scope">Scope</a><a class="toc-link depth-2" href="#vision">Vision</a><a class="toc-link depth-2" href="#appendix-downstream-depth">Appendix: Downstream Depth</a><a class="toc-link depth-3" href="#broader-direction-one-gate-many-evidence-producers-context-not-v0">Broader direction: one gate, many evidence producers (context, not v0)</a><a class="toc-link depth-3" href="#layered-architecture">Layered architecture</a><a class="toc-link depth-3" href="#differentiator-vs-commodity-matrix">Differentiator vs commodity matrix</a><a class="toc-link depth-3" href="#rejected-anti-pattern-rationale">Rejected / anti-pattern rationale</a><a class="toc-link depth-3" href="#candidate-evaluator-pack">Candidate evaluator pack</a><a class="toc-link depth-3" href="#constraints-hard">Constraints (hard)</a><a class="toc-link depth-3" href="#competitive-landscape-research-grounded-2025-2026">Competitive landscape (research-grounded, 2025-2026)</a><a class="toc-link depth-3" href="#research-validation-prior-art-supporting-the-differentiators">Research validation (prior art supporting the differentiators)</a><a class="toc-link depth-3" href="#dogfooding-targets">Dogfooding targets</a><a class="toc-link depth-3" href="#current-repo-state-2026-07-22">Current repo state (2026-07-22)</a>
+    </aside>
+    <main class="paper">
+      <header class="hero">
+        <div class="eyebrow">eval-quality · Planning artifact</div>
+        <h1>Product Brief: eval-quality</h1>
+        <p class="lede">The product boundary, customer need, differentiation, and validation scope.</p>
+        <div class="metadata">
+          <span class="pill status">Hypothesis validation</span>
+          <span class="pill">Updated 2026-07-22</span>
+          <span class="pill">Owner: Murat Ozcan</span>
+        </div>
+      </header>
+      <details class="mobile-toc">
+        <summary>On this page</summary>
+        <div class="mobile-toc-links"><a class="toc-link depth-2" href="#current-decision-validate-before-building">Current Decision: Validate Before Building</a><a class="toc-link depth-2" href="#executive-summary">Executive Summary</a><a class="toc-link depth-2" href="#the-problem">The Problem</a><a class="toc-link depth-2" href="#the-solution">The Solution</a><a class="toc-link depth-2" href="#what-makes-this-different">What Makes This Different</a><a class="toc-link depth-2" href="#who-this-serves">Who This Serves</a><a class="toc-link depth-2" href="#success-criteria">Success Criteria</a><a class="toc-link depth-2" href="#scope">Scope</a><a class="toc-link depth-2" href="#vision">Vision</a><a class="toc-link depth-2" href="#appendix-downstream-depth">Appendix: Downstream Depth</a><a class="toc-link depth-3" href="#broader-direction-one-gate-many-evidence-producers-context-not-v0">Broader direction: one gate, many evidence producers (context, not v0)</a><a class="toc-link depth-3" href="#layered-architecture">Layered architecture</a><a class="toc-link depth-3" href="#differentiator-vs-commodity-matrix">Differentiator vs commodity matrix</a><a class="toc-link depth-3" href="#rejected-anti-pattern-rationale">Rejected / anti-pattern rationale</a><a class="toc-link depth-3" href="#candidate-evaluator-pack">Candidate evaluator pack</a><a class="toc-link depth-3" href="#constraints-hard">Constraints (hard)</a><a class="toc-link depth-3" href="#competitive-landscape-research-grounded-2025-2026">Competitive landscape (research-grounded, 2025-2026)</a><a class="toc-link depth-3" href="#research-validation-prior-art-supporting-the-differentiators">Research validation (prior art supporting the differentiators)</a><a class="toc-link depth-3" href="#dogfooding-targets">Dogfooding targets</a><a class="toc-link depth-3" href="#current-repo-state-2026-07-22">Current repo state (2026-07-22)</a></div>
+      </details>
+      <article class="content"><h2 id="current-decision-validate-before-building">Current Decision: Validate Before Building<a class="heading-anchor" href="#current-decision-validate-before-building" aria-label="Link to Current Decision: Validate Before Building">#</a></h2>
+<p>The original brief assumed <code>eval-quality</code> should build a standalone TypeScript evaluation engine. That assumption was reversed on 2026-07-22 after a corrected competitor review identified <a href="https://github.com/agentevals-dev/agentevals" target="_blank" rel="noreferrer"><code>agentevals-dev/agentevals</code></a>, which already provides most of the runner, trace, golden-set, CI, reporting, and custom-evaluator machinery described here. Promptfoo covers a second mature baseline.</p>
+<p>The current execution authority is <a href="eval-quality-hypothesis-validation.html">HYPOTHESIS_VALIDATION_PLAN.md</a>. Do not implement the standalone engine scope in this brief before that plan reaches a decision.</p>
+<p>Current product boundary:</p>
+<ul>
+<li><code>eval-quality</code> is the single name for the agents, rules, methodology, governance, and any semantic evaluator pack that passes validation. The former name &quot;AE&quot; is retired.</li>
+<li>Existing open-source engines provide execution, trace ingestion, standard assertions, repeated runs, reports, and CI integration.</li>
+<li>The independent black-box evaluator model remains unproven. TEA compiles a sealed Eval Contract before implementation; the evaluator receives only that contract and black-box access.</li>
+<li>Four proposed semantic capabilities remain unproven: claim-to-evidence lineage, semantic checkpoints, process and outcome separation, and first material error attribution.</li>
+<li>Prototype only those capabilities through public engine extension points.</li>
+<li>If the hypotheses fail, <code>eval-quality</code> remains the methodology and governance layer over existing tools.</li>
+</ul>
+<p>The remainder of this brief preserves the original product hypothesis and its research rationale. Where it conflicts with this section or the validation plan, the validation plan controls.</p>
+<h2 id="executive-summary">Executive Summary<a class="heading-anchor" href="#executive-summary" aria-label="Link to Executive Summary">#</a></h2>
+<p><code>eval-quality</code> is an open-source evaluation methodology for AI agents and agent-built software, plus a conditional pack of semantic evaluators for AI-agent traces. It turns runtime behavior into evidence for a ship/don&#39;t-ship decision and runs on established evaluation engines.</p>
+<p>The bet behind eval-quality is a claim about where value lives in AI-assisted delivery: <strong>planning and validation are the expensive, high-value ends; code generation in the middle is cheap and getting cheaper.</strong> Teams have mature evidence sources at the validation end for deterministic software: unit, contract, E2E, performance, observability. Agent behavior is the part of validation that stays hardest to pin down, because agents are non-deterministic and a right answer reached by luck is a different failure from a wrong answer reached by good reasoning on bad data. Output-only scoring cannot tell those apart.</p>
+<p>The current hypothesis is that existing tools still miss valuable semantics: <strong>claim-to-evidence lineage</strong>, <strong>semantic checkpoints that accept valid alternate paths</strong>, <strong>process and outcome separation</strong>, and <strong>first material error attribution</strong>. Market research supports testing these ideas. It does not establish product value. The validation plan must prove incremental value against existing tools before any evaluator becomes production scope.</p>
+<h2 id="the-problem">The Problem<a class="heading-anchor" href="#the-problem" aria-label="Link to The Problem">#</a></h2>
+<p>Agents are shipping into production faster than teams can build confidence in them. When a team asks &quot;is this agent good enough to ship?&quot;, the honest answer today is usually a vibe check plus a benchmark score, and neither survives contact with reality:</p>
+<ul>
+<li><strong>Benchmark numbers hide the failure that matters.</strong> &quot;The agent scored 87%&quot; says nothing about <em>why</em> the 13% failed, or whether the 87% was reached by sound reasoning or by luck. A gate needs to know the difference.</li>
+<li><strong>Output-only grading is blind to the trajectory.</strong> An agent can fabricate a confident answer that happens to be right, or reach a wrong conclusion through a sound process on stale data. Grading only the final string treats these identically.</li>
+<li><strong>Exact-match trajectory checks are brittle.</strong> Asserting the agent called exactly these tools in exactly this order punishes valid alternative paths and breaks on every prompt tweak, so teams abandon it.</li>
+<li><strong>Judging the reasoning prose is a trap.</strong> Chain-of-thought is frequently <em>unfaithful</em> - the stated reasoning does not reflect the computation that produced the answer - so scoring the narrative rewards good storytelling, not good behavior.</li>
+<li><strong>Semantic diagnosis remains inconsistent.</strong> Mature tools cover execution, traces, tool checks, and outcome grading. The open question is whether they reliably connect claims to observed evidence, accept alternate sound paths, separate process from outcome, and localize the first material error.</li>
+</ul>
+<p>The cost of the status quo: teams either ship agents on faith, or they over-invest in bespoke, unmaintainable eval harnesses. Either way, agent behavior stays outside the evidence-based release process that governs the rest of their software.</p>
+<h2 id="the-solution">The Solution<a class="heading-anchor" href="#the-solution" aria-label="Link to The Solution">#</a></h2>
+<p>eval-quality has two layers under one name:</p>
+<ol>
+<li><strong>Methodology and governance:</strong> agents and rules identify risks, propose appropriate evals, generate configuration, interpret evidence, and apply a PASS / CONCERNS / FAIL policy.</li>
+<li><strong>Conditional semantic evaluator pack:</strong> custom evaluators run through an established engine&#39;s public extension points. Only evaluators that pass the validation plan enter this layer.</li>
+</ol>
+<p>The established engine supplies agent execution, trace ingestion, standard assertions, repeated runs, cost tracking, reports, CLI behavior, and CI integration.</p>
+<p>The primary workflow hypothesis targets human-on-the-loop and dark-factory delivery. TEA recognizes eval-relevant work and compiles a sealed Eval Contract from the product spec. A separate evaluator agent receives the contract, scoped test resources, and black-box system access. It receives no original spec, source code, repository, or builder context. It chooses its own evaluation actions from runtime observations. The <a href="eval-quality-hypothesis-validation.html">hypothesis validation plan</a> defines this provisional research boundary.</p>
+<p>The proposed evaluator pack contains four hypotheses:</p>
+<ul>
+<li><strong>Claim-to-evidence lineage:</strong> trace each material answer claim to supporting observed evidence and identify unsupported or contradicted claims.</li>
+<li><strong>Semantic checkpoints:</strong> model required dependencies using accepted paths or a dependency graph, then accept valid alternate routes and reject materially unsound ones.</li>
+<li><strong>Process and outcome separation:</strong> distinguish lucky success, sound failure caused by bad evidence, unsound failure, and ordinary success.</li>
+<li><strong>First material error attribution:</strong> identify the earliest trace event that caused the later material failure.</li>
+</ul>
+<h2 id="what-makes-this-different">What Makes This Different<a class="heading-anchor" href="#what-makes-this-different" aria-label="Link to What Makes This Different">#</a></h2>
+<p>eval-quality makes a testable bet about which semantics may add value beyond existing engines:</p>
+<ul>
+<li>Test whether an isolated black-box evaluator finds material defects missed by builder self-evaluation and pre-canned tests.</li>
+<li>Test whether claim-to-evidence lineage finds material failures the baselines miss.</li>
+<li>Test whether semantic checkpoints accept valid alternate paths while catching unsound dependencies.</li>
+<li>Test whether process and outcome separation changes diagnosis beyond existing scorers.</li>
+<li>Test whether first material error attribution localizes failures accurately enough to improve remediation.</li>
+<li>Keep exact sequence matching and reasoning-prose scoring outside the proposed differentiator.</li>
+</ul>
+<p><strong>Corrected landscape.</strong> The original research missed <code>agentevals-dev/agentevals</code>, a framework-neutral, local-first Python engine with OpenTelemetry trace ingestion, golden sets, CI gates, reports, and language-neutral custom evaluators. Promptfoo also covers mature trajectory assertions and CI execution. These products remove the case for rebuilding the commodity engine. Research such as TRACE and CORE remains useful as a design prior for the semantic hypotheses. It does not prove production value.</p>
+<p><strong>What we reuse.</strong> The selected engine supplies the runner, trace model, baseline assertions, reports, and CI contract. eval-quality prototypes remain custom evaluators and a small normalization shim. Any engine limitation is recorded as experiment evidence. It does not authorize a replacement engine during validation.</p>
+<p><strong>What may make it different</strong> is a proven combination of semantic evidence, risk-driven evaluator selection, traceable findings, and explicit gate governance. The experiment determines which parts deserve that claim.</p>
+<h2 id="who-this-serves">Who This Serves<a class="heading-anchor" href="#who-this-serves" aria-label="Link to Who This Serves">#</a></h2>
+<ul>
+<li><strong>Primary: teams shipping AI agents</strong> who already run evidence-based release gates for deterministic software and want agent behavior held to the same standard.</li>
+<li><strong>Primary: teams operating human-on-the-loop software factories</strong> who need an evaluator independent from the builder and its context.</li>
+<li><strong>Primary: platform / QA / test-architect engineers</strong> building the release gate itself, who need a machine-readable evidence artifact they can wire into CI alongside unit/contract/E2E/perf checks.</li>
+<li><strong>Secondary: agent framework authors and OSS contributors</strong> who need reusable evaluation methodology and semantic evaluators across frameworks.</li>
+<li><strong>Secondary (early): the author&#39;s own projects</strong> - <code>couture-cast</code> and a BMAD skill&#39;s own evals are the initial dogfooding targets.</li>
+</ul>
+<p>Success for these users looks like: replacing &quot;I think the agent is fine&quot; with a defensible PASS / CONCERNS / FAIL backed by a trajectory they can inspect.</p>
+<h2 id="success-criteria">Success Criteria<a class="heading-anchor" href="#success-criteria" aria-label="Link to Success Criteria">#</a></h2>
+<ul>
+<li><strong>Semantic incremental evidence:</strong> prototypes correctly catch at least three real, material failures missed by both baseline tools, spanning at least two semantic hypotheses and two agent systems.</li>
+<li><strong>Independent evaluation:</strong> the black-box evaluator catches at least three real, material defects missed by both self-evaluation and deterministic tests, spanning an agentic system and a conventional system, with zero context-boundary breaches.</li>
+<li><strong>Safety:</strong> every packaged evaluator reaches at least 0.85 precision and 0.80 recall, with zero false FAIL verdicts on valid behavior.</li>
+<li><strong>Stability:</strong> judge-backed verdicts agree across repeated runs at least 90 percent of the time.</li>
+<li><strong>Decision value:</strong> at least one finding changes a real ship decision or materially changes remediation.</li>
+<li><strong>Integration:</strong> passing evaluators run through public extension points without an engine fork.</li>
+<li><strong>Demand:</strong> after a technical pass, at least three organizations commit traces, engineering time, or a design-partner pilot.</li>
+</ul>
+<p>The complete corpus, labeling protocol, metrics, and decision rules live in the validation plan.</p>
+<h2 id="scope">Scope<a class="heading-anchor" href="#scope" aria-label="Link to Scope">#</a></h2>
+<p><strong>In the validation phase:</strong></p>
+<ul>
+<li>A locked, human-labeled trace corpus from at least two agent systems.</li>
+<li>A 12-task comparison of deterministic tests, builder-context self-evaluation, and isolated black-box evaluation across one agentic system and one conventional system.</li>
+<li>Strong baseline configurations for <code>agentevals-dev/agentevals</code> and Promptfoo.</li>
+<li>Disposable prototypes for the four semantic hypotheses.</li>
+<li>Comparative results, repeated-run stability evidence, and a recorded BUILD THIN PACK, NARROW AND REPEAT, or METHODOLOGY ONLY decision.</li>
+<li>The <code>eval-quality</code> methodology and governance layer under the same product name.</li>
+</ul>
+<p><strong>Out during validation:</strong></p>
+<ul>
+<li>A new runner, provider adapter framework, assertion DSL, pass@k implementation, cost engine, reporting framework, CLI, or CI engine.</li>
+<li>Production API stabilization or npm publication.</li>
+<li>Hosted service, dashboard, or UI.</li>
+<li>Claims that any semantic capability is differentiated before it passes the gate.</li>
+</ul>
+<h2 id="vision">Vision<a class="heading-anchor" href="#vision" aria-label="Link to Vision">#</a></h2>
+<p>If validation succeeds, eval-quality becomes a reusable methodology and thin semantic evaluator pack that turns agent traces into defensible release evidence. Established engines remain underneath it. If validation fails, eval-quality still encodes how to select, generate, calibrate, interpret, and govern agent evals using those engines.</p>
+<hr>
+<h2 id="appendix-downstream-depth">Appendix: Downstream Depth<a class="heading-anchor" href="#appendix-downstream-depth" aria-label="Link to Appendix: Downstream Depth">#</a></h2>
+<p><em>(Vision and architecture context beyond the 1-2 page brief.)</em></p>
+<h3 id="broader-direction-one-gate-many-evidence-producers-context-not-v0">Broader direction: one gate, many evidence producers (context, not v0)<a class="heading-anchor" href="#broader-direction-one-gate-many-evidence-producers-context-not-v0" aria-label="Link to Broader direction: one gate, many evidence producers (context, not v0)">#</a></h3>
+<p>The larger frame: AI-assisted delivery has an expensive-planning end and an expensive-validation end, with cheap code-gen in the middle. The validation-end story is a single ship/don&#39;t-ship gate fed by many evidence producers:</p>
+<ul>
+<li>unit tests</li>
+<li>contract tests</li>
+<li>E2E tests</li>
+<li>performance tests</li>
+<li>observability / production signals</li>
+<li><strong>agent-eval (eval-quality) ← the missing producer</strong></li>
+</ul>
+<p>All producers emit evidence into one PASS / CONCERNS / FAIL gate. eval-quality is scoped to being <em>one</em> producer done well. Aggregating them is a direction, not a v0 build.</p>
+<h3 id="layered-architecture">Layered architecture<a class="heading-anchor" href="#layered-architecture" aria-label="Link to Layered architecture">#</a></h3>
+<ol>
+<li><strong>Existing eval engine:</strong> agent execution, trace ingestion, standard assertions, repeated runs, reports, and CI integration.</li>
+<li><strong>eval-quality semantic evaluator pack:</strong> only the custom evaluators that pass validation.</li>
+<li><strong>eval-quality methodology and governance:</strong> agents and rules that select, generate, calibrate, interpret, and gate the evals.</li>
+</ol>
+<p>Layers two and three share the <code>eval-quality</code> name. Layer one remains an external dependency selected for capability and maintainability.</p>
+<h3 id="differentiator-vs-commodity-matrix">Differentiator vs commodity matrix<a class="heading-anchor" href="#differentiator-vs-commodity-matrix" aria-label="Link to Differentiator vs commodity matrix">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Capability</th>
+<th>Position</th>
+<th>Lead with it?</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Claim-to-evidence lineage</td>
+<td>Unproven hypothesis</td>
+<td>Validate as H1</td>
+</tr>
+<tr>
+<td>Semantic checkpoints over accepted paths or dependencies</td>
+<td>Unproven hypothesis</td>
+<td>Validate as H2</td>
+</tr>
+<tr>
+<td>Path quality (soundness/efficiency of path)</td>
+<td>Largely commodity</td>
+<td>Baseline input to H2 and H3</td>
+</tr>
+<tr>
+<td>Process and outcome separation</td>
+<td>Commodity in isolation</td>
+<td>Validate incremental value as H3</td>
+</tr>
+<tr>
+<td>First material error attribution</td>
+<td>Unproven hypothesis with commercial competition</td>
+<td>Validate as H4</td>
+</tr>
+<tr>
+<td>Tool-call correctness</td>
+<td>Commodity</td>
+<td>Support, don&#39;t pitch</td>
+</tr>
+<tr>
+<td>Efficiency metrics</td>
+<td>Commodity</td>
+<td>Support, don&#39;t pitch</td>
+</tr>
+<tr>
+<td>Holistic LLM-as-judge</td>
+<td>Commodity</td>
+<td>Support, don&#39;t pitch</td>
+</tr>
+<tr>
+<td>Exact-match trajectory assertion</td>
+<td>Anti-pattern (brittle)</td>
+<td><strong>No - explicitly avoid as the lead</strong></td>
+</tr>
+<tr>
+<td>Judging chain-of-thought / reasoning prose</td>
+<td>Anti-pattern (CoT often unfaithful)</td>
+<td><strong>No - explicitly avoid</strong></td>
+</tr>
+</tbody></table></div>
+<h3 id="rejected-anti-pattern-rationale">Rejected / anti-pattern rationale<a class="heading-anchor" href="#rejected-anti-pattern-rationale" aria-label="Link to Rejected / anti-pattern rationale">#</a></h3>
+<ul>
+<li><strong>Exact-match trajectory:</strong> brittle, punishes valid alternate paths, and breaks on prompt changes. Semantic checkpoints are the candidate alternative and still require proof.</li>
+<li><strong>Judging reasoning prose:</strong> research shows chain-of-thought is frequently unfaithful (stated reasoning ≠ actual computation), so judging the narrative rewards storytelling over behavior. Judge grounding/outcome/path instead of prose.</li>
+</ul>
+<h3 id="candidate-evaluator-pack">Candidate evaluator pack<a class="heading-anchor" href="#candidate-evaluator-pack" aria-label="Link to Candidate evaluator pack">#</a></h3>
+<ul>
+<li>Claim-to-evidence lineage.</li>
+<li>Semantic checkpoints over accepted paths or a dependency graph.</li>
+<li>Process and outcome separation.</li>
+<li>First material error attribution.</li>
+<li>A minimal trace-normalization shim when the selected engine requires one.</li>
+</ul>
+<h3 id="constraints-hard">Constraints (hard)<a class="heading-anchor" href="#constraints-hard" aria-label="Link to Constraints (hard)">#</a></h3>
+<ul>
+<li>Product name: <code>eval-quality</code> for the methodology and any validated evaluator pack.</li>
+<li>Engine code is reused through public extension points.</li>
+<li>Prototype code may use the language best supported by the selected engine. TypeScript and JavaScript consumers remain supported where the engine protocol permits them.</li>
+<li>Published original code remains Apache-2.0 with permissively licensed dependencies.</li>
+<li>No production scope is approved until the validation decision is recorded.</li>
+</ul>
+<h3 id="competitive-landscape-research-grounded-2025-2026">Competitive landscape (research-grounded, 2025-2026)<a class="heading-anchor" href="#competitive-landscape-research-grounded-2025-2026" aria-label="Link to Competitive landscape (research-grounded, 2025-2026)">#</a></h3>
+<ul>
+<li><strong>Python-first (dominant):</strong> DeepEval (de facto CI eval standard; ships agent primitives: task completion, tool correctness, step efficiency, plan adherence), Ragas (RAG faithfulness, output-level), OpenAI Evals (benchmark-style), Arize Phoenix (OTel tracing + evals). Research/benchmark: Inspect (UK AISI), TruLens, AgentBench/τ-bench/SWE-Bench. Commercial: Galileo, Patronus.</li>
+<li><strong>SaaS platforms:</strong> LangSmith (LangChain/LangGraph-native), Langfuse (open-core), Braintrust (framework-agnostic, eval-first).</li>
+<li><strong>TypeScript-native (exists, but coupled):</strong> several TS-native options ship evals (Mastra, Braintrust, LangSmith/AgentEvals, Langfuse), but each is bound to a hosted platform or a specific agent runtime. Mastra evals (<code>@mastra/core/evals</code>) is the strongest developer-facing case (gates + scorers, CI-integrated, provider-agnostic router), yet still <strong>coupled to Mastra&#39;s agent runtime</strong>. Vercel AI SDK has no real eval harness; LangGraph.js trails Python and is LangSmith-coupled.</li>
+<li><strong>Missed direct competitor:</strong> <code>agentevals-dev/agentevals</code> is a local-first, framework-neutral Python engine with OpenTelemetry traces, golden eval sets, CI gates, reports, and language-neutral custom evaluators. It covers most of the original engine scope.</li>
+<li><strong>Takeaway:</strong> reuse an existing engine. Test the semantic hypotheses against <code>agentevals-dev/agentevals</code> and Promptfoo before claiming a product wedge.</li>
+</ul>
+<h3 id="research-validation-prior-art-supporting-the-differentiators">Research validation (prior art supporting the differentiators)<a class="heading-anchor" href="#research-validation-prior-art-supporting-the-differentiators" aria-label="Link to Research validation (prior art supporting the differentiators)">#</a></h3>
+<ul>
+<li><strong>TRACE</strong> (arXiv 2510.02837) - reference-free trajectory eval via an accumulating per-step &quot;evidence bank.&quot; Design prior for evidence-grounded per-step faithfulness, with two honest caveats: (a) TRACE grounds the agent&#39;s <em>thought</em> field (its hallucination axis), whereas eval-quality deliberately grounds <em>answer Claims</em> against observed Evidence and does <strong>not</strong> judge reasoning prose; (b) TRACE&#39;s own evaluation uses injected synthetic faults, exposed thought fields, and an LLM judge - it is a research prior, not production validation. eval-quality adapts the evidence-bank <em>idea</em>, not TRACE&#39;s thought-grounding target.</li>
+<li><strong>CORE</strong> (arXiv 2509.20998) - models tasks as DFAs over tool calls; each prompt induces a <em>set</em> of valid reference paths. Strongest prior art for reference-<em>set</em> (order-tolerant) trajectory scoring. Precise: CORE scores by <em>normalized edit-distance partial credit</em> over the DFA-defined path set (its Kendall&#39;s-tau component stays order-sensitive), so it is path-set-aware, <strong>not</strong> literally path-invariant - the product term &quot;path-invariant&quot; is marketing shorthand for this.</li>
+<li><strong>Process Reward Models</strong> (AgentPRM/InversePRM, arXiv 2502.10325) - step-level rewards vs reference policies (training-oriented).</li>
+<li><strong>CoT unfaithfulness</strong>: Anthropic &quot;Reasoning models don&#39;t always say what they think&quot; (arXiv 2505.05410; decisive hints mentioned ~25-39% of the time); Oxford &quot;Chain-of-Thought Is Not Explainability&quot; (2025); BonaFide meta-eval (arXiv 2605.25052; existing CoT-faithfulness metrics near-chance). Together these justify NOT judging reasoning prose.</li>
+</ul>
+<h3 id="dogfooding-targets">Dogfooding targets<a class="heading-anchor" href="#dogfooding-targets" aria-label="Link to Dogfooding targets">#</a></h3>
+<ul>
+<li><code>couture-cast</code> project.</li>
+<li>A BMAD skill&#39;s own evals.</li>
+</ul>
+<h3 id="current-repo-state-2026-07-22">Current repo state (2026-07-22)<a class="heading-anchor" href="#current-repo-state-2026-07-22" aria-label="Link to Current repo state (2026-07-22)">#</a></h3>
+<p>The repository is a TypeScript scaffold with a version constant and placeholder test. It has no evaluator behavior. The next approved artifact is the hypothesis experiment described in <code>HYPOTHESIS_VALIDATION_PLAN.md</code>.</p>
+
+</article>
+      <footer class="footer">Rendered from brief.md. This file is self-contained and print-ready.</footer>
+    </main>
+  </div>
+</body>
+</html>

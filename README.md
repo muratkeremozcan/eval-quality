@@ -1,24 +1,29 @@
 # eval-quality
 
-**Agent evaluation for the reasoning path, not just the output.**
+**Evidence-driven quality decisions for AI agents.**
 
-Most eval tools grade the final answer. `eval-quality` grades how the agent *got there* - the trajectory: which tools it called, in what order, whether each claim in its answer traces back to real evidence, and whether it reached a sound conclusion for sound reasons. A right answer reached by luck and a wrong answer reached by good reasoning on bad data are different failures, and output-only scoring can't tell them apart.
+Existing eval engines already execute agents, capture trajectories, run standard checks, and report results. `eval-quality` is testing two product ideas: independent black-box evaluation for human-on-the-loop and dark-factory delivery, plus four semantic evaluators that may add meaningful evidence.
 
-> Status: early scaffold. API not yet published.
+> Status: hypothesis validation. API not yet published. The standalone engine scope is paused. Execute [HYPOTHESIS_VALIDATION_PLAN.md](HYPOTHESIS_VALIDATION_PLAN.md) before production implementation.
+
+The current direction uses an established open-source eval engine for execution, traces, reports, and CI. `eval-quality` owns the agents, rules, methodology, governance, and any semantic evaluator extensions that pass the validation gate.
+
+The independent-evaluation hypothesis uses a sealed Eval Contract created by TEA before implementation. The evaluator receives that contract and black-box system access. The original spec, source code, repository, and builder context remain outside its workspace. The [hypothesis validation plan](HYPOTHESIS_VALIDATION_PLAN.md) defines this provisional research boundary.
 
 ## Why
 
-Planning is expensive. Validation is expensive. Code generation in the middle is cheap. The hard, high-value ends of AI-assisted delivery are planning and validation - and agent behavior, whether it reasoned soundly rather than just answered correctly, is the part of validation that TypeScript-native tooling still underserves.
+Planning and validation are the expensive, high-value ends of AI-assisted delivery. Agent behavior remains difficult to diagnose because a correct answer can come from unsupported claims or an unsound path, while an incorrect answer can follow a sound process over bad evidence.
 
-`eval-quality` treats agent-eval as an **evidence source**, not a benchmark number. Its output is meant to feed a ship / don't-ship decision (PASS / CONCERNS / FAIL), not to report "the agent got 87%."
+`eval-quality` treats agent evaluation as an **evidence source** for a ship / don't-ship decision. The hypothesis experiment determines whether its proposed evaluator layer adds useful evidence beyond mature baseline tools.
 
-## What it will do
+## Candidate evaluator capabilities
 
-- **Runner** - drive an agent (provider-agnostic) against a task and capture the full transcript.
-- **Assertions** - a typed `Expect.*` DSL for tool calls, sequence, params, and performance budgets.
-- **Graders** - deterministic-first, LLM-judge-second, with pass@k aggregation for non-determinism.
-- **Trajectory eval** (the differentiator) - faithfulness / grounding, path quality, process-vs-outcome judging, and reference-trajectory scoring.
-- **Evidence artifacts** - a human summary plus a machine-readable result for gates and CI.
+- **Claim-to-evidence lineage:** identify material claims that lack support in the agent's observed evidence.
+- **Semantic checkpoints:** accept valid alternate paths while detecting skipped dependencies and unsound actions.
+- **Process and outcome separation:** distinguish lucky success, sound failure, and ordinary success or failure.
+- **First material error attribution:** identify the earliest action that caused the later failure.
+
+These are hypotheses. Existing tools provide the execution engine. Only capabilities that pass the [validation plan](HYPOTHESIS_VALIDATION_PLAN.md) will enter the production scope.
 
 ## Development
 

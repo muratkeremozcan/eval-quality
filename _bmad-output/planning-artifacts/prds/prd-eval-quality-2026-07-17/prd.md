@@ -1,26 +1,85 @@
 ---
 title: eval-quality
-status: final
+status: blocked-on-hypothesis-validation
 created: 2026-07-17
-updated: 2026-07-17
+updated: 2026-07-22
 ---
 
 # PRD: eval-quality
-*Working title - confirm.*
+
+## Current Decision and Execution Authority
+
+This PRD is blocked from implementation. The original standalone TypeScript engine assumption was reversed on 2026-07-22 after a corrected competitor review identified `agentevals-dev/agentevals` as a close, mature implementation of the commodity engine layer.
+
+The only approved implementation work is [HYPOTHESIS_VALIDATION_PLAN.md](../../../../HYPOTHESIS_VALIDATION_PLAN.md). It defines the corpus, human labels, baselines, prototype boundaries, metrics, fixed gates, and final decision.
+
+Current decisions:
+
+1. `eval-quality` is the single name for the agents, rules, methodology, governance, and any semantic evaluator pack that passes validation. The former name "AE" is retired.
+2. Use an existing open-source engine for execution, trace ingestion, standard assertions, repeated runs, reports, CLI behavior, and CI integration.
+3. Test the independent black-box evaluator hypothesis plus four semantic hypotheses: claim-to-evidence lineage, semantic checkpoints, process and outcome separation, and first material error attribution.
+4. Treat the sealed Eval Contract and evaluator isolation as provisional experiment controls defined by the [hypothesis validation plan](../../../../HYPOTHESIS_VALIDATION_PLAN.md).
+5. Do not implement a runner, provider adapter framework, assertion DSL, pass@k engine, cost engine, reporting framework, CLI, or CI engine during validation.
+6. Rewrite this PRD after the experiment. Include only claims and capabilities that pass the preregistered gates.
+
+Known specification corrections:
+
+- FR-6 evaluates final-answer claims against observed evidence. Calling it "per-step faithfulness" is inaccurate.
+- LCS compares total sequences. It does not enforce a partial order. H2 must test an accepted-path set or explicit dependency graph.
+- Grounding establishes support from observed evidence. It does not establish external truth when the evidence is stale, false, or adversarial.
+- First material error attribution is part of the validation set because the research identified it as a proposed differentiator. Deferring it before validation would leave a core hypothesis untested.
+
+## Current Product Workflow and Validation Requirements
+
+The 2026-07-22 product clarification makes the methodology layer the primary product hypothesis. eval-quality should help TEA recognize AI-agent work, apply eval best practices, and prepare independent evaluation for human-on-the-loop and dark-factory delivery.
+
+The evaluator cannot operate without an expected-behavior oracle. TEA resolves this by compiling a sealed **Eval Contract** from the product spec before implementation. The execution agent sees that contract and black-box interfaces. It does not see the original spec, source code, repository, builder conversation, or implementation logs.
+
+### Current validation requirements
+
+#### VFR-1: Detect eval-relevant work
+
+TEA identifies AI-agent, LLM, probabilistic, or otherwise nondeterministic behavior in BMad planning artifacts and recommends an eval strategy proportionate to risk.
+
+#### VFR-2: Compile a sealed Eval Contract
+
+Before implementation begins, TEA converts the product spec into a versioned Eval Contract containing behavior goals, requirement and risk identifiers, oracles and rubrics, permitted black-box interfaces, test-data and cleanup rules, safety limits, budgets, and evidence requirements. The contract contains no prescribed action sequence.
+
+#### VFR-3: Isolate the evaluator
+
+The independent evaluator runs in a separate workspace with allowlisted tools and mounts. It receives only the sealed Eval Contract, scoped credentials and test data, and black-box access through the public UI, API, CLI, or MCP interface. Every run records an isolation manifest. Any prohibited-input access invalidates the run.
+
+#### VFR-4: Evaluate adaptively
+
+The independent evaluator chooses its own actions to investigate contract goals and risks. Existing deterministic and pre-canned tests remain baseline evidence. They do not prescribe the evaluator's path.
+
+#### VFR-5: Produce governed evidence
+
+The evaluator emits traceable findings, confidence, observed evidence, and a PASS / CONCERNS / FAIL recommendation. Low-confidence or ambiguous findings route to a human-on-the-loop decision rather than silently blocking or passing the change.
+
+#### VFR-6: Reuse an existing engine
+
+Execution, trace capture, standard checks, repeated runs, reports, and CI integration come from the selected open-source engine. eval-quality owns the methodology, isolation contract, governance, and any semantic evaluators that pass validation.
+
+### Current user journey
+
+TEA reads a BMad product spec, recognizes eval-relevant behavior, and freezes an Eval Contract. A builder agent implements the change with normal spec and repository access. A separate evaluator agent receives only the Eval Contract and black-box access to the resulting system. The resulting product may itself be agentic or conventional. The evaluator explores adaptively, produces evidence, and feeds a human-on-the-loop or automated release gate.
+
+Sections below preserve the original candidate engine requirements for traceability. They are research inputs. They do not authorize production implementation where they conflict with this section or the validation plan.
 
 ## 0. Document Purpose
 
-This PRD is for the maintainer (Murat) and future OSS contributors of `eval-quality`, and for downstream BMAD workflows (architecture, epics/stories) that will build on it. It specifies **v0 of the OSS engine only** - the provider-agnostic TypeScript library that turns an agent run into ship/don't-ship evidence. It builds on the product brief (`../../briefs/brief-eval-quality-2026-07-17/brief.md`); vision-level material (cross-signal aggregation across test types, and the BMAD Test Architect "AE" methodology layer) lives there and is explicitly out of scope here. Vocabulary is Glossary-anchored; features are grouped with globally numbered FRs; assumptions are tagged inline and indexed in §9.
+This PRD preserves the original engine proposal and records why it is blocked. The product brief lives at `../../briefs/brief-eval-quality-2026-07-17/brief.md`. The validation plan is the current execution document. A replacement implementation PRD will follow only after the experiment decision.
 
-## 1. Vision
+## 1. Archived Vision
 
 `eval-quality` is a provider-agnostic TypeScript library that drives an AI agent against a task, captures the full transcript, and scores the **Trajectory** as **Evidence** for a ship/don't-ship decision - not as a benchmark percentage. Its output is a Gate Verdict (PASS / CONCERNS / FAIL) backed by an inspectable, machine-readable Evidence Artifact.
 
-The wager: in AI-assisted delivery, planning and validation are the expensive, high-value ends while code generation is cheap. Deterministic software already has evidence producers at the validation end (unit, contract, E2E, perf, observability); agent behavior is the missing one. eval-quality supplies it, and does so with an opinion: it leads with **evidence-grounded per-step faithfulness** (every Claim traced to observed Evidence) and **path-invariant reference-trajectory scoring** (sound paths pass even when they differ from the reference), while treating tool-call correctness, efficiency, and holistic LLM-judging as commodity support rather than the pitch.
+The wager: in AI-assisted delivery, planning and validation are the expensive, high-value ends while code generation is cheap. Deterministic software already has evidence producers at the validation end. Agent behavior remains difficult to evaluate. The current hypotheses are claim-to-evidence lineage, semantic checkpoints, process and outcome separation, and first material error attribution. The validation plan must establish whether these add value beyond existing tools.
 
 For v0 the goal is a tight, shippable engine that a TypeScript developer can adopt from the README in under 30 minutes and use to gate real agent behavior - proven by dogfooding on the `couture-cast` project and a BMAD skill's own evals.
 
-## 2. Target User
+## 2. Archived Target User
 
 ### 2.1 Jobs To Be Done
 
@@ -37,12 +96,12 @@ For v0 the goal is a tight, shippable engine that a TypeScript developer can ado
 
 ### 2.3 Key User Journeys
 
-- **UJ-1. Dana gates an agent change in CI.** Dana, a TS engineer, opens a PR that tweaks her agent's prompt. CI runs an `eval-quality` suite: each task drives the agent through the Anthropic adapter, captures the Transcript, runs deterministic `Expect.*` assertions, then faithfulness and path-invariant graders, aggregated with pass@k. The run emits an Evidence Artifact and a Gate Verdict. The verdict is CONCERNS: two answers contained ungrounded Claims. Dana reads the human summary, sees exactly which Claims lacked Evidence, and fixes the prompt before merge.
+- **UJ-1. Dana gates an agent change in CI.** Dana opens a PR that changes an agent prompt. An existing engine runs the suite. eval-quality supplies the methodology and validated semantic evaluators. The result identifies unsupported claims with trace evidence and produces a governed gate decision.
 - **UJ-2. Sam wires eval-quality into the release gate.** Sam, a test-architect, consumes the machine-readable Evidence Artifact from an eval-quality Run and maps PASS/CONCERNS/FAIL into the team's existing gate alongside unit/contract/E2E evidence - without eval-quality dictating the gate policy.
-- **UJ-3. Murat dogfoods on couture-cast.** Murat writes reference trajectories for a handful of couture-cast agent tasks, runs eval-quality, and confirms path-invariant scoring passes a valid alternate path while failing a genuinely unsound one - changing a real ship decision.
+- **UJ-3. Murat dogfoods on couture-cast.** Murat labels couture-cast traces, compares the two baselines with the prototypes, and determines whether semantic checkpoints accept valid alternate paths while rejecting unsound ones.
 - **UJ-4. Frankie swaps the provider.** Frankie, an agent-framework author, has an eval-quality suite running against the Anthropic Adapter and needs it provider-neutral. Frankie supplies a different Driver/Judge Adapter (or the test/fake Adapter) and re-runs the same Tasks, Assertions, and Graders unchanged - no task or grader code edits - confirming the eval layer is not locked to one model vendor. Exercises FR-2; validated by SM-5.
 
-## 3. Glossary
+## 3. Archived Glossary
 
 - **Task**: A single unit of work given to an agent, plus the inputs/context needed to attempt it. The subject of evaluation.
 - **Run**: One execution of the harness over a Task (or a suite of Tasks), producing a Transcript and graded results. May include multiple attempts (see pass@k).
@@ -61,14 +120,16 @@ For v0 the goal is a tight, shippable engine that a TypeScript developer can ado
 - **Path Quality**: A trajectory Grader: soundness, efficiency, and non-redundancy of the Trajectory.
 - **Process-vs-Outcome**: Judging that distinguishes correctness of the answer from soundness of the Trajectory (e.g., "right answer, wrong reasons").
 - **Reference Trajectory**: An author-provided exemplar Trajectory for a Task, used for comparison.
-- **Path-Invariant Scoring**: Scoring a Trajectory against a Reference Trajectory by soundness/quality of the path rather than exact step-for-step match, so valid alternate paths pass. *"Invariant" is shorthand:* scoring is **order-tolerant over a set of accepted paths** (partial-order, predicate-matched checkpoints), not literally indifferent to order - see FR-7 and the CORE prior art in the Appendix.
+- **Semantic Checkpoint Scoring**: Scoring required path dependencies through an accepted-path set or dependency graph so valid alternate trajectories can pass. The mechanism is an experiment subject under H2.
 - **pass@k**: Running a Task k times and aggregating results to reason about a distribution of behavior rather than one draw.
 - **Cost Budget**: A per-Run (and/or per-Task) cost ceiling; the engine accounts spend against it and reports it.
 - **Evidence Artifact**: The machine-readable result of a Run, designed to feed a gate/CI.
 - **Evidence Report**: The human-readable summary of a Run.
 - **Gate Verdict**: The ship/don't-ship signal derived from a Run: **PASS / CONCERNS / FAIL**.
 
-## 4. Features
+## 4. Archived Candidate Features
+
+The features in this section describe the superseded standalone engine proposal. During validation, only FR-6 and FR-7 supply research questions. H3 and H4 from the validation plan complete the four-hypothesis set. The remaining FRs are expected to come from the selected existing engine.
 
 ### 4.1 Provider-Agnostic Runner & Adapters
 
@@ -134,13 +195,13 @@ A caller can compose a pipeline of Graders that executes deterministic Graders b
 - The pipeline accepts caller-supplied **commodity Graders** - a holistic LLM-as-judge Grader and an efficiency-metrics Grader ship in-box as opt-in, non-default Graders (tool-call correctness is already covered deterministically by FR-3). These are supported so the Non-Goals promise of "supported, not the pitch" is backed by a real interface, but none is on the default path.
 - The pipeline is deterministic given the same Transcript and fixed Judge outputs (injectable for tests).
 
-### 4.4 Trajectory Graders - the Differentiator
+### 4.4 Candidate Semantic Evaluators
 
-**Description:** The graders eval-quality leads with. They score the Trajectory as Evidence: per-step Faithfulness/Grounding, Path Quality, Process-vs-Outcome, and Path-Invariant reference scoring. eval-quality deliberately does **not** lead with brittle exact-match trajectory checks, and does **not** judge chain-of-thought / reasoning prose (it is frequently unfaithful). Realizes UJ-1, UJ-3.
+**Description:** These are unproven evaluator hypotheses retained for the validation experiment. They must demonstrate incremental value over both baselines before they enter a replacement PRD.
 
 **Functional Requirements:**
 
-#### FR-6: Per-step Faithfulness / Grounding grader
+#### FR-6: Claim-to-Evidence Lineage Evaluator
 A caller can grade whether each Claim in the agent's answer traces to observed Evidence in the Transcript. Realizes UJ-1.
 
 **Consequences (testable):**
@@ -148,10 +209,10 @@ A caller can grade whether each Claim in the agent's answer traces to observed E
 - On a curated fixture where the answer contains a fabricated (ungrounded) Claim, the grader flags that Claim while an output-only equality check passes.
 - The grader judges Claims against observed Evidence, not against the agent's stated reasoning narrative.
 
-#### FR-7: Path-Invariant Reference-Trajectory grader
+#### FR-7: Semantic Checkpoint Evaluator
 A caller can grade a Trajectory against an author-provided Reference Trajectory by path soundness/quality rather than exact step match. Also provides Path Quality and Process-vs-Outcome judgments. Realizes UJ-3.
 
-**Scoring mechanism (v0) - so "soundness" is a computation, not a vibe:** the grade is produced in two explicit layers, not a single unspecified judge call. (1) A **deterministic checkpoint-satisfaction** layer over the Reference Trajectory's required Tool Calls: each checkpoint is predicate-matched (reusing the `Expect.tools.*` matcher vocabulary, Open Question 6, §8 item 3) and enforced as a *partial order* via the FR-3 LCS matcher, so extra, interleaved, or validly-reordered steps do not fail it. (2) A **Judge-scored soundness rubric** over the residual (unsound detours, redundancy, skipped preconditions), invoked only where the deterministic layer cannot decide. The reported path score is a graded [0,1] value combining the checkpoint-satisfaction ratio with the soundness rubric, and the two layers are reported **separately** so a consumer can tell a structural miss from a judgment call.
+**Candidate scoring mechanisms:** represent required checkpoints as either an accepted-path set or an explicit dependency graph. Compare both mechanisms during the pilot. LCS remains an exact-sequence baseline and may not be described as partial-order enforcement. Use a Judge-scored soundness rubric only for residual questions that deterministic checkpoint evaluation cannot resolve. Report structural and judgment findings separately.
 
 **Consequences (testable):**
 - On a fixture, a valid alternate path that satisfies all required checkpoints in a valid partial order passes; a path that skips a required checkpoint or takes an unsound detour fails - where an exact-match check would fail both.
@@ -160,7 +221,7 @@ A caller can grade a Trajectory against an author-provided Reference Trajectory 
 - Path Quality reports soundness/efficiency/redundancy signals over the Trajectory.
 
 **Notes:**
-- `[NOTE FOR PM]` Faithfulness and path-invariant graders depend on a Judge; their calibration (thresholds, prompt design) is a v0 quality risk. Fixtures must lock behavior. See Open Questions.
+- `[NOTE FOR PM]` Judge-backed prototype evaluators require frozen prompts, model snapshots, thresholds, and repeated-run stability measurement.
 
 ### 4.5 pass@k Aggregation
 
@@ -217,7 +278,7 @@ A Run derives a PASS / CONCERNS / FAIL Gate Verdict from configurable policy ove
 
 ### 4.8 CLI
 
-**Description:** A thin command-line wrapper over the library - not a second engine. Added primarily because CI and other headless runners need a non-interactive, shell-invokable entry point that returns an Evidence Artifact and a verdict-derived exit code without a caller first writing a TypeScript test file - the dominant v0 execution surface (§9). It secondarily unblocks the future BMAD Test Architect ("AE") methodology layer (out of scope), which will orchestrate via shell invocation rather than a TS import. Library-first remains true: the CLI calls the same Run/Grader/Reporting functions the programmatic API calls. Realizes UJ-1, UJ-2.
+**Description:** This archived proposal described a thin command-line wrapper over the library. The current direction uses the selected engine's CLI and CI contract. eval-quality methodology can orchestrate that existing interface.
 
 **Functional Requirements:**
 
@@ -234,69 +295,77 @@ A caller can run a scaffold/init command to generate a starter eval spec and Ref
 
 **Consequences (testable):**
 - Generates a minimal, typed eval file plus a Reference Trajectory stub in the documented authoring format (ties to Open Question 3).
-- Designed as the shell-out target for the BMAD "AE" workflow's own scaffolding step (generate eval spec + reference-trajectory stub + rubric template per skill) rather than requiring TEA to hand-generate TypeScript boilerplate itself.
+- Designed as the shell-out target for eval-quality methodology and scaffolding. The current direction delegates this interface to the selected engine.
 
 **Notes:**
 - `[ASSUMPTION]` The CLI ships in v0 (this reverses the earlier "library-first, no CLI" assumption - see §9).
 
 ## 5. Non-Goals (Explicit)
 
-- Not a hosted service, dashboard, or GUI.
-- Not a benchmark/leaderboard producer; no "the agent got 87%" as the deliverable.
-- Not the BMAD Test Architect "AE" workflow (the consuming methodology layer) - out of scope, informs interface stability only.
-- Not cross-signal aggregation across test types - that is a longer-term direction, not a v0 build.
-- Not leading on commodity graders (tool-call correctness, efficiency, holistic LLM-judge) - supported as opt-in, non-default Graders in the FR-5 pipeline, not the pitch.
-- Not first-material-error attribution / first-error localization in v0. The market research names this as genuine whitespace, so it is a deliberate deferral (candidate fast-follow FR), *not* an oversight. v0's process-vs-outcome signal (FR-7) reports the two scores but does not localize the first failing Step.
-- Not judging chain-of-thought / reasoning prose as a scored signal.
-- Not shipping provider Adapters beyond Anthropic in v0.
-- Not a rich or interactive CLI - run + scaffold only, non-interactive by default, no TUI, no config wizard.
+- No standalone eval engine during validation.
+- No runner, provider adapter framework, assertion DSL, pass@k engine, cost engine, reporting framework, CLI, or CI engine.
+- No engine fork.
+- No hosted service, dashboard, or GUI.
+- No production npm API or compatibility promise.
+- No benchmark or leaderboard as the deliverable.
+- No judging chain-of-thought prose as a scored signal.
+- No claim that grounding establishes external truth.
+- No differentiation claim before a capability passes the preregistered gate.
 
-## 6. MVP Scope
+## 6. Hypothesis Validation Scope
 
 ### 6.1 In Scope
-- Provider-agnostic Runner + Adapter interface; Anthropic Adapter; Transcript capture; connection/auth pre-flight with classified errors (FR-1, FR-2).
-- `Expect.*` deterministic Assertion DSL incl. partial-credit sequence matching and budgets (FR-3, FR-4).
-- Deterministic-first / Judge-second Grader pipeline, incl. skip-not-score on Driver crash (FR-5).
-- Trajectory graders: Faithfulness/Grounding + Path-Invariant reference (with Path Quality, Process-vs-Outcome) (FR-6, FR-7).
-- pass@k aggregation with pluggable pass criterion (FR-8a); Cost Budget accounting incl. hard charge-before-spend circuit breaker (FR-8).
-- Human + machine-readable evidence + Gate Verdict, incl. distinct judge-error status (FR-9, FR-10).
-- CLI: run + scaffold, wrapping the same library API (FR-11, FR-12).
-- TypeScript, Node >= 20, ESM, Apache-2.0, unscoped npm `eval-quality`.
 
-### 6.2 Out of Scope for MVP
-- Additional provider Adapters (OpenAI, Google, etc.) - interface ready; deferred to post-v0.
-- BMAD "AE" methodology layer (out of scope) - keep engine interfaces stable and wrappable so it can consume the engine later.
-- Cross-signal aggregation across other test types - a longer-term direction.
-- Hosted UI / reporting service.
+- The 8-trace pilot corpus and 48-trace confirmatory corpus defined in the validation plan.
+- The 12-task independent-evaluator experiment defined under H0.
+- One agentic system and one conventional UI, API, or CLI system in the H0 task set.
+- A sealed Eval Contract and auditable isolation manifest for every H0 task.
+- Independent human labels and adjudication.
+- Strong baseline configurations for `agentevals-dev/agentevals` and Promptfoo.
+- Four disposable custom evaluator prototypes: claim-to-evidence lineage, semantic checkpoints, process and outcome separation, and first material error attribution.
+- Repeated-run stability measurement.
+- A comparative results summary and recorded product decision.
+
+### 6.2 Exit Decisions
+
+- **DARK-FACTORY VALIDATED:** H0 passes. eval-quality may advance independent black-box evaluation to design-partner validation for human-on-the-loop and dark-factory delivery.
+- **DARK-FACTORY REJECTED:** H0 fails. TEA still supports conventional eval best practices, and the dark-factory claim is removed.
+- **BUILD THIN PACK:** At least two hypotheses pass every required gate. Write a replacement PRD containing only those evaluators and the `eval-quality` methodology layer.
+- **NARROW AND REPEAT:** Exactly one hypothesis passes. Run a second confirmatory corpus for that evaluator before creating a production PRD.
+- **METHODOLOGY ONLY:** No hypothesis passes, or the safety gate fails. Retain `eval-quality` as agents, rules, methodology, and governance over existing engines.
 
 ## 7. Success Metrics
 
-**Primary**
-- **SM-1**: Dogfood adoption - eval-quality gates real agent behavior in `couture-cast` and evaluates a BMAD skill's own evals, producing a Gate Verdict that changes ≥1 real ship decision. Validates FR-1, FR-6, FR-7, FR-9, FR-10.
-- **SM-2**: Faithfulness efficacy - on a curated fixture set, the Faithfulness grader flags ≥90% of injected ungrounded Claims that output-only checks miss. Validates FR-6.
-- **SM-3**: Path-invariance efficacy - reference-trajectory grading passes valid alternate paths and fails unsound ones on the fixture set with 0 false-fails on the "valid alternate" cases. Validates FR-7.
+- **SM-D1:** The independent evaluator catches at least 3 real, material defects missed by both self-evaluation and deterministic tests, spanning the agentic and conventional systems under test.
+- **SM-D2:** Independent-evaluator precision reaches at least 0.85 and recall reaches at least 0.80.
+- **SM-D3:** Clean implementations receive zero false FAIL verdicts and at most one false CONCERNS verdict.
+- **SM-D4:** At least one defect is found through an evaluator-chosen action absent from the pre-canned baseline.
+- **SM-D5:** Every H0 run has a complete isolation manifest and zero prohibited-input accesses.
+- **SM-D6:** At least one H0 finding changes a real ship decision or materially changes remediation.
+- **SM-1:** At least 3 real, material failures missed by both baselines are caught by the prototypes.
+- **SM-2:** Incremental catches span at least 2 hypotheses and both agent systems.
+- **SM-3:** Every evaluator proposed for packaging reaches at least 0.85 precision and 0.80 recall.
+- **SM-4:** Valid grounded behavior receives zero false FAIL verdicts and at most one false CONCERNS verdict.
+- **SM-5:** Judge-backed verdict stability reaches at least 0.90 across three repeated runs.
+- **SM-6:** First material error attribution reaches at least 0.70 exact-step agreement and 0.85 adjacent-step agreement if proposed for packaging.
+- **SM-7:** At least one finding changes a real ship decision or materially changes remediation.
+- **SM-8:** Every passing evaluator runs through a public extension point without an engine fork.
+- **SM-9:** After a technical pass, at least 3 organizations commit traces, engineering time, or a design-partner pilot.
 
-**Secondary**
-- **SM-4**: Time-to-first-eval - a new TS dev writes and runs a trajectory eval from the README in < 30 min, via either the library or the CLI. Validates FR-1..FR-12 (adoptability).
-- **SM-5**: Provider-agnosticism - swapping to a fake Adapter runs the full pipeline with zero network calls in tests. Validates FR-2.
-- **SM-6**: Cost honesty - deterministic-first keeps Judge spend a minority of total cost on the dogfood suite. Validates FR-5, FR-8.
+The validation plan defines each metric, corpus quota, labeling rule, and stop condition. Those definitions may not change after confirmatory results are visible.
 
-**Counter-metrics (do not optimize)**
-- **SM-C1**: Do not maximize number of graders/metrics - counterbalances SM-2/SM-3; more signals that aren't evidence-grounded dilute the differentiator.
-- **SM-C2**: Do not chase pass rate on the gate - counterbalances SM-1; a gate tuned to always PASS is worthless. Track that CONCERNS/FAIL fire when warranted.
+## 8. Archived Engine Decisions
 
-## 8. Open Questions - Resolved
-
-All six were open at draft time; all six are now decided defaults (v0 ships these, consumer-overridable where noted). None are runtime-tunable config surfaces in v0 unless stated.
+The decisions below belonged to the original engine proposal. They are preserved for traceability and are inactive until a replacement PRD explicitly adopts them.
 
 1. **Judge calibration.** The Judge is pinned to an exact model version, never "latest," and must never be the same or a weaker tier than the Driver under test (no self-judging). Judge prompts and pass/fail thresholds are versioned fixtures in-repo; a Judge/prompt change only ships if it doesn't regress the calibration fixture set already required for SM-2/SM-3. Thresholds are an empirically-set default, not a v0 config surface.
 2. **Claim decomposition.** Hybrid, biased to rule-based: deterministic sentence/clause segmentation produces the claim list (unit-testable - same answer string, same claims, every time); the Judge is invoked only to decide grounded/ungrounded per already-segmented Claim, never to do the segmentation itself. Full judge-based decomposition is non-deterministic and rejected for v0.
 3. **Reference Trajectory authoring format.** A plain typed TypeScript object, not a DSL or YAML: an ordered checkpoint list (required Tool Calls with predicate-matchable params, reusing the `Expect.tools.*` matcher vocabulary) plus the expected final-answer shape - not a full recorded transcript. Bar: authoring one must take less effort than the equivalent output-only Assertion.
-4. **Evidence Artifact schema versioning.** A single `schemaVersion` integer on the Evidence Artifact, independent of package SemVer. Additive fields bump nothing consumer-visible; breaking shape changes bump `schemaVersion`, and the library refuses to silently emit an old-shape artifact under a new version. No deprecation-window policy yet - one producer, no second real consumer to protect until the BMAD "AE" methodology layer exists.
+4. **Evidence Artifact schema versioning.** This archived proposal used a `schemaVersion` integer independent of package SemVer. The experiment will preserve raw engine output and define only the minimal evaluator-result schema required for comparison.
 5. **Default Gate Verdict policy.** FAIL on any deterministic Assertion failure or pass@k below the caller's `minPassRate`; CONCERNS if a Judge-backed Grader (Faithfulness, Path-Invariant) flagged an issue with no deterministic failure; PASS otherwise. Deterministic failures are hard; Judge-backed findings are a flag, not a block. Ships as the literal, documented default function (FR-10) - no hidden weighting - and remains consumer-overridable.
 6. **Transcript schema.** Normalize to the provider-neutral core every Assertion/Grader reads (ordered Steps, Tool Call name/params, result, final answer, cost), plus one untyped `raw` passthrough field per Step for provider-native detail. Core Assertions/Graders never read `raw` - preserves neutrality without discarding data a future Adapter might need.
 
-## 9. Assumptions Index
+## 9. Archived Assumptions Index
 
 - §1/§2 - [ASSUMPTION] Primary users are TS agent teams + platform/test-architect engineers; secondary are framework authors and the maintainer's own projects.
 - §2.3 - [ASSUMPTION] CI is the dominant execution surface for v0 (vs. interactive/local-only).
@@ -308,7 +377,7 @@ All six were open at draft time; all six are now decided defaults (v0 ships thes
 
 ---
 
-## Developer-Product Requirements
+## Archived Developer-Product Requirements
 
 *This is a library; the following cross-cutting requirements apply.*
 
@@ -338,7 +407,7 @@ All six were open at draft time; all six are now decided defaults (v0 ships thes
 
 ---
 
-## Appendix: Downstream Depth (architecture / rationale)
+## Archived Appendix: Downstream Depth
 *(Depth that supports architecture and epics, beyond the PRD body.)*
 
 ### Rejected alternatives (rationale)
@@ -350,10 +419,10 @@ All six were open at draft time; all six are now decided defaults (v0 ships thes
 
 ### Prior art (grounds FR-6 / FR-7 and the no-CoT-judging decision)
 
-- **FR-6 (per-step faithfulness / evidence bank):** TRACE (arXiv 2510.02837) - reference-free trajectory eval accumulating evidence per step. *Adaptation, not adoption:* TRACE grounds the agent's *thought* field (its hallucination axis); eval-quality grounds *answer Claims* against observed Evidence and deliberately does not judge reasoning prose. TRACE is a research prior (injected synthetic faults, exposed thought fields, LLM judge), not production validation - v0 borrows the evidence-bank idea, not the target.
-- **FR-7 (path-invariant reference scoring):** CORE (arXiv 2509.20998) - tasks as DFAs over tool calls; a prompt induces a *set* of valid reference paths (skipped preconditions / reordered calls that final-state checks miss). *Precise:* CORE scores by normalized edit-distance partial credit over that DFA-defined path set and stays order-sensitive (Kendall's-tau component), i.e. reference-*set*-aware, not literally path-invariant; and its authors flag the DFA abstraction as a scaling bottleneck. Also AgentPRM/InversePRM (arXiv 2502.10325) for step-level reward vs reference policy. *Prior-art note:* the market research grounded this wedge on AgentLens (arXiv 2605.12925, Prefix-Tree-Acceptor references) with the same "design-prior-not-production-proven" caveat; CORE is the sharper mechanism prior - both are priors to adapt, not solved methods.
+- **FR-6 research prior:** TRACE (arXiv 2510.02837) accumulates evidence per step. TRACE grounds the agent's thought field. eval-quality H1 evaluates final-answer claims against observed evidence. TRACE remains a design prior rather than production proof.
+- **FR-7 research prior:** CORE (arXiv 2509.20998) models a set of valid reference paths and scores normalized edit distance. H2 will compare accepted-path and dependency-graph mechanisms. CORE remains a design prior rather than a solved production method.
 - **No CoT-prose judging:** Anthropic 2505.05410, Oxford "CoT Is Not Explainability" (2025), BonaFide 2605.25052 (CoT-faithfulness metrics near-chance).
-- **Landscape:** commodity primitives (tool-call correctness, step efficiency, holistic judge) are DeepEval/Mastra-standard; the strongest TS-native incumbent (Mastra evals) is coupled to its own runtime and the other TS options are platform-bound; eval-quality's framework-agnostic + evidence-first + path-invariant combination is the wedge.
+- **Landscape:** commodity primitives are already mature. `agentevals-dev/agentevals` and Promptfoo are the experiment baselines. Any eval-quality wedge must show incremental evidence against both.
 
 ### Mechanism / transport decisions (for architecture)
 
@@ -362,7 +431,7 @@ All six were open at draft time; all six are now decided defaults (v0 ships thes
 - **Grader pipeline** ordering: deterministic graders first with configurable short-circuit; Judge-backed graders second. Enables cost control (SM-6) and network-free testing (SM-5). Judge-backed graders are additionally skipped (not scored) when the Transcript shows a Driver-level crash with no usable final answer.
 - **Evidence Artifact** carries a schema version; Gate Verdict policy is consumer-configurable with an opinion-light default.
 - **Faithfulness pipeline**: answer → Claim decomposition → per-Claim grounding check against observed Evidence with Evidence pointers. Claim-decomposition strategy (rule/judge/hybrid) is Open Question 2.
-- **Path-invariant scoring** (FR-7): two explicit layers, not one judge call. (1) Deterministic checkpoint-satisfaction over the Reference Trajectory's required Tool Calls, predicate-matched via the `Expect.tools.*` vocabulary and enforced as a partial order via FR-3 LCS (extra/interleaved/validly-reordered steps do not fail it); (2) a Judge-scored soundness rubric over the residual, invoked only where the deterministic layer cannot decide. Reported path score is a graded [0,1] combining the checkpoint ratio and the rubric, with the two layers surfaced separately (structural miss vs judgment call). Emit Process-vs-Outcome as two distinct signals. Compare candidate to Reference on soundness/quality, not literal step match.
+- **Semantic checkpoint scoring** (FR-7): compare an accepted-path set with an explicit dependency graph during the pilot. LCS is a sequence baseline and does not enforce a partial order. A Judge-scored soundness rubric may address residual questions after deterministic checkpoint evaluation. Report structural and judgment findings separately.
 - **Cost circuit breaker (FR-8)**: a stateful, shareable accounting object (spent/remaining/cap) that refuses the next Driver/Judge call *before* it would exceed the cap - charge-as-you-go, not measure-after. Distinct from and complementary to the soft `Expect.performance.maxCostUsd`-style assertion, which only detects overspend post-hoc. Scope the object per-process/worker so it can cover a whole suite invocation, not just one Task.
 - **Connection/auth pre-flight (FR-2)**: one cached check per Adapter per process, classifying failure into a small fixed set (tls/connection/auth/rate_limit/parse) with targeted remediation text per class - turns an opaque SDK exception into an actionable message on first use. If any TLS relaxation is ever needed for a corporate-proxy or self-hosted-gateway use case, scope it to a per-client transport option passed to that Adapter's SDK client, never a process-global TLS setting; a global relaxation silently weakens unrelated HTTPS traffic (Judge calls, telemetry, etc.), a per-client one doesn't.
 - **Partial-credit sequence matching (FR-3)**: longest-common-subsequence over the expected vs. observed Tool Call sequence, so extra or interleaved calls don't fail an otherwise-valid ordering the way an exact/contiguous match would.
@@ -371,7 +440,7 @@ All six were open at draft time; all six are now decided defaults (v0 ships thes
 
 ### Interface-stability rationale (why it matters for v0)
 
-The out-of-scope BMAD "AE" methodology layer will *consume* this engine. To keep the engine wrappable later without churn, v0 must stabilize: Adapter interface, Grader/pipeline API, Evidence Artifact schema, and Gate Verdict shape. This is why versioning/schema-version fields are v0 requirements even though there is one consumer today.
+The current product boundary combines eval-quality methodology and any validated evaluator pack under one name. Existing engine contracts remain external dependencies. Stabilize a public evaluator API only after the experiment identifies a capability worth packaging.
 
 ### Testing / fixtures (dogfood + efficacy)
 
@@ -386,5 +455,5 @@ Beyond the mechanisms specified above, v0 deliberately favors portable, determin
 
 - Additional provider Adapters (OpenAI, Google, local/OSS models).
 - Cross-signal aggregation across unit/contract/E2E/perf/observability.
-- BMAD "AE" workflow (the consuming methodology layer).
+- Additional methodology automation beyond the validation experiment.
 - Anything beyond CLI run + scaffold (interactive mode, TUI, config wizard, additional subcommands).

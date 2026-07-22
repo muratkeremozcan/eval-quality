@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="The current validation requirements and the original engine proposal retained for traceability.">
+  <title>Product Requirements: eval-quality</title>
+  <style>
+  :root {
+    color-scheme: light;
+    --canvas: #f4f6fb;
+    --paper: #ffffff;
+    --ink: #182230;
+    --muted: #667085;
+    --line: #e4e7ec;
+    --brand: #3157d5;
+    --brand-deep: #243f9f;
+    --brand-soft: #eef2ff;
+    --accent: #087f6d;
+    --accent-soft: #eafaf6;
+    --code: #101828;
+    --shadow: 0 18px 50px rgba(16, 24, 40, 0.08);
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--canvas);
+    color: var(--ink);
+    font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 16px;
+    line-height: 1.72;
+    text-rendering: optimizeLegibility;
+  }
+
+  a { color: var(--brand); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+  a:hover { color: var(--brand-deep); }
+
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    border-bottom: 1px solid rgba(228, 231, 236, 0.9);
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(14px);
+  }
+
+  .topbar-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    max-width: 1280px;
+    min-height: 64px;
+    margin: 0 auto;
+    padding: 10px 28px;
+  }
+
+  .brand {
+    color: var(--ink);
+    font-size: 15px;
+    font-weight: 760;
+    letter-spacing: -0.01em;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .brand-mark { color: var(--brand); }
+  .nav { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
+  .nav-link {
+    border-radius: 9px;
+    color: #475467;
+    font-size: 13px;
+    font-weight: 650;
+    padding: 6px 10px;
+    text-decoration: none;
+  }
+  .nav-link:hover, .nav-link.active { background: var(--brand-soft); color: var(--brand-deep); }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 248px minmax(0, 900px);
+    gap: 30px;
+    max-width: 1230px;
+    margin: 34px auto 70px;
+    padding: 0 28px;
+  }
+
+  .sidebar {
+    position: sticky;
+    top: 90px;
+    align-self: start;
+    max-height: calc(100vh - 112px);
+    overflow: auto;
+    padding: 4px 8px 20px 0;
+  }
+
+  .toc-title {
+    margin: 0 0 10px 10px;
+    color: #98a2b3;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .toc-link {
+    display: block;
+    border-left: 2px solid transparent;
+    border-radius: 0 8px 8px 0;
+    color: #667085;
+    font-size: 13px;
+    line-height: 1.35;
+    margin: 1px 0;
+    padding: 6px 8px 6px 10px;
+    text-decoration: none;
+  }
+  .toc-link:hover { border-left-color: var(--brand); background: #fff; color: var(--brand-deep); }
+  .toc-link.depth-3 { padding-left: 22px; font-size: 12px; }
+
+  .paper {
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid rgba(228, 231, 236, 0.85);
+    border-radius: 18px;
+    background: var(--paper);
+    box-shadow: var(--shadow);
+  }
+
+  .hero {
+    border-bottom: 1px solid var(--line);
+    background: linear-gradient(145deg, #ffffff 20%, #f1f4ff 100%);
+    padding: 58px 64px 44px;
+  }
+  .eyebrow {
+    color: var(--brand);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+  }
+  .hero h1 {
+    max-width: 760px;
+    margin: 12px 0 12px;
+    color: #101828;
+    font-size: clamp(34px, 5vw, 54px);
+    line-height: 1.08;
+    letter-spacing: -0.04em;
+  }
+  .lede { max-width: 680px; margin: 0; color: #475467; font-size: 18px; line-height: 1.55; }
+  .metadata { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    border: 1px solid #d0d5dd;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.8);
+    color: #475467;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 3px 10px;
+  }
+  .pill.status { border-color: #a9e4d7; background: var(--accent-soft); color: var(--accent); }
+
+  .mobile-toc { display: none; margin: 26px 32px 0; }
+  .mobile-toc summary { color: var(--brand-deep); cursor: pointer; font-size: 14px; font-weight: 750; }
+  .mobile-toc-links { margin-top: 10px; }
+
+  .content { padding: 24px 64px 64px; }
+  .content h2, .content h3, .content h4 { position: relative; scroll-margin-top: 88px; color: #101828; }
+  .content h2 {
+    border-top: 1px solid var(--line);
+    margin: 52px 0 18px;
+    padding-top: 38px;
+    font-size: 29px;
+    line-height: 1.2;
+    letter-spacing: -0.025em;
+  }
+  .content h2:first-child { border-top: 0; margin-top: 14px; padding-top: 12px; }
+  .content h3 { margin: 34px 0 12px; font-size: 21px; line-height: 1.3; letter-spacing: -0.015em; }
+  .content h4 { margin: 28px 0 10px; font-size: 17px; line-height: 1.35; }
+  .heading-anchor {
+    opacity: 0;
+    margin-left: 8px;
+    color: #98a2b3;
+    font-size: 0.72em;
+    font-weight: 500;
+    text-decoration: none;
+  }
+  .content h2:hover .heading-anchor, .content h3:hover .heading-anchor { opacity: 1; }
+
+  .content p { margin: 0 0 18px; }
+  .content strong { color: #101828; }
+  .content ul, .content ol { margin: 0 0 20px; padding-left: 26px; }
+  .content li { margin: 7px 0; padding-left: 3px; }
+  .content li::marker { color: var(--brand); font-weight: 750; }
+  .content blockquote {
+    margin: 24px 0;
+    border-left: 4px solid var(--brand);
+    border-radius: 0 10px 10px 0;
+    background: var(--brand-soft);
+    color: #344054;
+    padding: 16px 20px;
+  }
+  .content blockquote p:last-child { margin-bottom: 0; }
+  .content hr { height: 1px; margin: 44px 0; border: 0; background: var(--line); }
+
+  code {
+    border: 1px solid #e4e7ec;
+    border-radius: 5px;
+    background: #f8fafc;
+    color: #344054;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    font-size: 0.88em;
+    padding: 0.14em 0.38em;
+  }
+  pre {
+    overflow: auto;
+    margin: 24px 0;
+    border: 1px solid #344054;
+    border-radius: 12px;
+    background: var(--code);
+    color: #e4e7ec;
+    line-height: 1.58;
+    padding: 20px 22px;
+  }
+  pre code { border: 0; background: transparent; color: inherit; font-size: 13px; padding: 0; }
+
+  .table-wrap { overflow-x: auto; margin: 24px 0 30px; border: 1px solid var(--line); border-radius: 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; line-height: 1.5; }
+  th { background: #f8fafc; color: #344054; font-size: 12px; letter-spacing: 0.04em; text-align: left; text-transform: uppercase; }
+  th, td { border-bottom: 1px solid var(--line); padding: 12px 14px; vertical-align: top; }
+  tr:last-child td { border-bottom: 0; }
+  tbody tr:hover { background: #fafbff; }
+
+  .footer {
+    border-top: 1px solid var(--line);
+    color: #98a2b3;
+    font-size: 12px;
+    padding: 24px 64px 30px;
+  }
+
+  @media (max-width: 920px) {
+    .layout { display: block; margin-top: 22px; padding: 0 16px; }
+    .sidebar { display: none; }
+    .mobile-toc { display: block; }
+    .hero { padding: 46px 36px 34px; }
+    .content { padding: 20px 36px 48px; }
+    .footer { padding-left: 36px; padding-right: 36px; }
+  }
+
+  @media (max-width: 620px) {
+    .topbar-inner { align-items: flex-start; flex-direction: column; gap: 6px; padding: 10px 16px; }
+    .nav { justify-content: flex-start; }
+    .hero { padding: 36px 24px 30px; }
+    .hero h1 { font-size: 34px; }
+    .lede { font-size: 16px; }
+    .content { padding: 14px 24px 42px; }
+    .mobile-toc { margin-left: 24px; margin-right: 24px; }
+    .footer { padding-left: 24px; padding-right: 24px; }
+  }
+
+  @media print {
+    @page { margin: 16mm 15mm; }
+    body { background: #fff; font-size: 10.5pt; }
+    .topbar, .sidebar, .mobile-toc, .heading-anchor { display: none !important; }
+    .layout { display: block; max-width: none; margin: 0; padding: 0; }
+    .paper { border: 0; border-radius: 0; box-shadow: none; }
+    .hero { padding: 0 0 10mm; background: #fff; }
+    .hero h1 { font-size: 28pt; }
+    .content { padding: 0; }
+    .content h2 { break-after: avoid; margin-top: 9mm; padding-top: 5mm; }
+    .content h3, .content h4 { break-after: avoid; }
+    pre, blockquote, .table-wrap { break-inside: avoid; }
+    .table-wrap { overflow: visible; }
+    a { color: inherit; text-decoration: none; }
+    .footer { padding: 8mm 0 0; }
+  }
+</style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="eval-quality-product-brief.html"><span class="brand-mark">eval</span>-quality</a>
+      <nav class="nav" aria-label="Companion documents"><a class="nav-link" href="eval-quality-product-brief.html">Product brief</a><a class="nav-link active" href="eval-quality-prd.html">PRD</a><a class="nav-link" href="eval-quality-hypothesis-validation.html">Hypothesis plan</a></nav>
+    </div>
+  </header>
+  <div class="layout">
+    <aside class="sidebar" aria-label="Table of contents">
+      <p class="toc-title">On this page</p>
+      <a class="toc-link depth-2" href="#current-decision-and-execution-authority">Current Decision and Execution Authority</a><a class="toc-link depth-2" href="#current-product-workflow-and-validation-requirements">Current Product Workflow and Validation Requirements</a><a class="toc-link depth-3" href="#current-validation-requirements">Current validation requirements</a><a class="toc-link depth-3" href="#current-user-journey">Current user journey</a><a class="toc-link depth-2" href="#section-0-document-purpose">0. Document Purpose</a><a class="toc-link depth-2" href="#section-1-archived-vision">1. Archived Vision</a><a class="toc-link depth-2" href="#section-2-archived-target-user">2. Archived Target User</a><a class="toc-link depth-3" href="#section-21-jobs-to-be-done">2.1 Jobs To Be Done</a><a class="toc-link depth-3" href="#section-22-non-users-v1">2.2 Non-Users (v1)</a><a class="toc-link depth-3" href="#section-23-key-user-journeys">2.3 Key User Journeys</a><a class="toc-link depth-2" href="#section-3-archived-glossary">3. Archived Glossary</a><a class="toc-link depth-2" href="#section-4-archived-candidate-features">4. Archived Candidate Features</a><a class="toc-link depth-3" href="#section-41-provider-agnostic-runner-adapters">4.1 Provider-Agnostic Runner &amp; Adapters</a><a class="toc-link depth-3" href="#section-42-expect-assertion-dsl">4.2 Expect.* Assertion DSL</a><a class="toc-link depth-3" href="#section-43-grader-pipeline-deterministic-first-judge-second">4.3 Grader Pipeline (Deterministic-First, Judge-Second)</a><a class="toc-link depth-3" href="#section-44-candidate-semantic-evaluators">4.4 Candidate Semantic Evaluators</a><a class="toc-link depth-3" href="#section-45-passk-aggregation">4.5 pass@k Aggregation</a><a class="toc-link depth-3" href="#section-46-cost-budget-accounting">4.6 Cost Budget Accounting</a><a class="toc-link depth-3" href="#section-47-evidence-reporting-gate-verdict">4.7 Evidence Reporting &amp; Gate Verdict</a><a class="toc-link depth-3" href="#section-48-cli">4.8 CLI</a><a class="toc-link depth-2" href="#section-5-non-goals-explicit">5. Non-Goals (Explicit)</a><a class="toc-link depth-2" href="#section-6-hypothesis-validation-scope">6. Hypothesis Validation Scope</a><a class="toc-link depth-3" href="#section-61-in-scope">6.1 In Scope</a><a class="toc-link depth-3" href="#section-62-exit-decisions">6.2 Exit Decisions</a><a class="toc-link depth-2" href="#section-7-success-metrics">7. Success Metrics</a><a class="toc-link depth-2" href="#section-8-archived-engine-decisions">8. Archived Engine Decisions</a><a class="toc-link depth-2" href="#section-9-archived-assumptions-index">9. Archived Assumptions Index</a><a class="toc-link depth-2" href="#archived-developer-product-requirements">Archived Developer-Product Requirements</a><a class="toc-link depth-3" href="#api-contracts-public-surface">API Contracts / Public Surface</a><a class="toc-link depth-3" href="#versioning-deprecation-policy">Versioning &amp; Deprecation Policy</a><a class="toc-link depth-3" href="#performance-budgets">Performance Budgets</a><a class="toc-link depth-3" href="#language-runtime-targets-dependency-policy">Language / Runtime Targets &amp; Dependency Policy</a><a class="toc-link depth-3" href="#constraints-guardrails">Constraints &amp; Guardrails</a><a class="toc-link depth-2" href="#archived-appendix-downstream-depth">Archived Appendix: Downstream Depth</a><a class="toc-link depth-3" href="#rejected-alternatives-rationale">Rejected alternatives (rationale)</a><a class="toc-link depth-3" href="#prior-art-grounds-fr-6-fr-7-and-the-no-cot-judging-decision">Prior art (grounds FR-6 / FR-7 and the no-CoT-judging decision)</a><a class="toc-link depth-3" href="#mechanism-transport-decisions-for-architecture">Mechanism / transport decisions (for architecture)</a><a class="toc-link depth-3" href="#interface-stability-rationale-why-it-matters-for-v0">Interface-stability rationale (why it matters for v0)</a><a class="toc-link depth-3" href="#testing-fixtures-dogfood-efficacy">Testing / fixtures (dogfood + efficacy)</a><a class="toc-link depth-3" href="#additional-ideas-considered">Additional ideas considered</a><a class="toc-link depth-3" href="#deferred-post-v0">Deferred (post-v0)</a>
+    </aside>
+    <main class="paper">
+      <header class="hero">
+        <div class="eyebrow">eval-quality · Planning artifact</div>
+        <h1>Product Requirements: eval-quality</h1>
+        <p class="lede">The current validation requirements and the original engine proposal retained for traceability.</p>
+        <div class="metadata">
+          <span class="pill status">Blocked pending validation</span>
+          <span class="pill">Updated 2026-07-22</span>
+          <span class="pill">Owner: Murat Ozcan</span>
+        </div>
+      </header>
+      <details class="mobile-toc">
+        <summary>On this page</summary>
+        <div class="mobile-toc-links"><a class="toc-link depth-2" href="#current-decision-and-execution-authority">Current Decision and Execution Authority</a><a class="toc-link depth-2" href="#current-product-workflow-and-validation-requirements">Current Product Workflow and Validation Requirements</a><a class="toc-link depth-3" href="#current-validation-requirements">Current validation requirements</a><a class="toc-link depth-3" href="#current-user-journey">Current user journey</a><a class="toc-link depth-2" href="#section-0-document-purpose">0. Document Purpose</a><a class="toc-link depth-2" href="#section-1-archived-vision">1. Archived Vision</a><a class="toc-link depth-2" href="#section-2-archived-target-user">2. Archived Target User</a><a class="toc-link depth-3" href="#section-21-jobs-to-be-done">2.1 Jobs To Be Done</a><a class="toc-link depth-3" href="#section-22-non-users-v1">2.2 Non-Users (v1)</a><a class="toc-link depth-3" href="#section-23-key-user-journeys">2.3 Key User Journeys</a><a class="toc-link depth-2" href="#section-3-archived-glossary">3. Archived Glossary</a><a class="toc-link depth-2" href="#section-4-archived-candidate-features">4. Archived Candidate Features</a><a class="toc-link depth-3" href="#section-41-provider-agnostic-runner-adapters">4.1 Provider-Agnostic Runner &amp; Adapters</a><a class="toc-link depth-3" href="#section-42-expect-assertion-dsl">4.2 Expect.* Assertion DSL</a><a class="toc-link depth-3" href="#section-43-grader-pipeline-deterministic-first-judge-second">4.3 Grader Pipeline (Deterministic-First, Judge-Second)</a><a class="toc-link depth-3" href="#section-44-candidate-semantic-evaluators">4.4 Candidate Semantic Evaluators</a><a class="toc-link depth-3" href="#section-45-passk-aggregation">4.5 pass@k Aggregation</a><a class="toc-link depth-3" href="#section-46-cost-budget-accounting">4.6 Cost Budget Accounting</a><a class="toc-link depth-3" href="#section-47-evidence-reporting-gate-verdict">4.7 Evidence Reporting &amp; Gate Verdict</a><a class="toc-link depth-3" href="#section-48-cli">4.8 CLI</a><a class="toc-link depth-2" href="#section-5-non-goals-explicit">5. Non-Goals (Explicit)</a><a class="toc-link depth-2" href="#section-6-hypothesis-validation-scope">6. Hypothesis Validation Scope</a><a class="toc-link depth-3" href="#section-61-in-scope">6.1 In Scope</a><a class="toc-link depth-3" href="#section-62-exit-decisions">6.2 Exit Decisions</a><a class="toc-link depth-2" href="#section-7-success-metrics">7. Success Metrics</a><a class="toc-link depth-2" href="#section-8-archived-engine-decisions">8. Archived Engine Decisions</a><a class="toc-link depth-2" href="#section-9-archived-assumptions-index">9. Archived Assumptions Index</a><a class="toc-link depth-2" href="#archived-developer-product-requirements">Archived Developer-Product Requirements</a><a class="toc-link depth-3" href="#api-contracts-public-surface">API Contracts / Public Surface</a><a class="toc-link depth-3" href="#versioning-deprecation-policy">Versioning &amp; Deprecation Policy</a><a class="toc-link depth-3" href="#performance-budgets">Performance Budgets</a><a class="toc-link depth-3" href="#language-runtime-targets-dependency-policy">Language / Runtime Targets &amp; Dependency Policy</a><a class="toc-link depth-3" href="#constraints-guardrails">Constraints &amp; Guardrails</a><a class="toc-link depth-2" href="#archived-appendix-downstream-depth">Archived Appendix: Downstream Depth</a><a class="toc-link depth-3" href="#rejected-alternatives-rationale">Rejected alternatives (rationale)</a><a class="toc-link depth-3" href="#prior-art-grounds-fr-6-fr-7-and-the-no-cot-judging-decision">Prior art (grounds FR-6 / FR-7 and the no-CoT-judging decision)</a><a class="toc-link depth-3" href="#mechanism-transport-decisions-for-architecture">Mechanism / transport decisions (for architecture)</a><a class="toc-link depth-3" href="#interface-stability-rationale-why-it-matters-for-v0">Interface-stability rationale (why it matters for v0)</a><a class="toc-link depth-3" href="#testing-fixtures-dogfood-efficacy">Testing / fixtures (dogfood + efficacy)</a><a class="toc-link depth-3" href="#additional-ideas-considered">Additional ideas considered</a><a class="toc-link depth-3" href="#deferred-post-v0">Deferred (post-v0)</a></div>
+      </details>
+      <article class="content"><h2 id="current-decision-and-execution-authority">Current Decision and Execution Authority<a class="heading-anchor" href="#current-decision-and-execution-authority" aria-label="Link to Current Decision and Execution Authority">#</a></h2>
+<p>This PRD is blocked from implementation. The original standalone TypeScript engine assumption was reversed on 2026-07-22 after a corrected competitor review identified <code>agentevals-dev/agentevals</code> as a close, mature implementation of the commodity engine layer.</p>
+<p>The only approved implementation work is <a href="eval-quality-hypothesis-validation.html">HYPOTHESIS_VALIDATION_PLAN.md</a>. It defines the corpus, human labels, baselines, prototype boundaries, metrics, fixed gates, and final decision.</p>
+<p>Current decisions:</p>
+<ol>
+<li><code>eval-quality</code> is the single name for the agents, rules, methodology, governance, and any semantic evaluator pack that passes validation. The former name &quot;AE&quot; is retired.</li>
+<li>Use an existing open-source engine for execution, trace ingestion, standard assertions, repeated runs, reports, CLI behavior, and CI integration.</li>
+<li>Test the independent black-box evaluator hypothesis plus four semantic hypotheses: claim-to-evidence lineage, semantic checkpoints, process and outcome separation, and first material error attribution.</li>
+<li>Treat the sealed Eval Contract and evaluator isolation as provisional experiment controls defined by the <a href="eval-quality-hypothesis-validation.html">hypothesis validation plan</a>.</li>
+<li>Do not implement a runner, provider adapter framework, assertion DSL, pass@k engine, cost engine, reporting framework, CLI, or CI engine during validation.</li>
+<li>Rewrite this PRD after the experiment. Include only claims and capabilities that pass the preregistered gates.</li>
+</ol>
+<p>Known specification corrections:</p>
+<ul>
+<li>FR-6 evaluates final-answer claims against observed evidence. Calling it &quot;per-step faithfulness&quot; is inaccurate.</li>
+<li>LCS compares total sequences. It does not enforce a partial order. H2 must test an accepted-path set or explicit dependency graph.</li>
+<li>Grounding establishes support from observed evidence. It does not establish external truth when the evidence is stale, false, or adversarial.</li>
+<li>First material error attribution is part of the validation set because the research identified it as a proposed differentiator. Deferring it before validation would leave a core hypothesis untested.</li>
+</ul>
+<h2 id="current-product-workflow-and-validation-requirements">Current Product Workflow and Validation Requirements<a class="heading-anchor" href="#current-product-workflow-and-validation-requirements" aria-label="Link to Current Product Workflow and Validation Requirements">#</a></h2>
+<p>The 2026-07-22 product clarification makes the methodology layer the primary product hypothesis. eval-quality should help TEA recognize AI-agent work, apply eval best practices, and prepare independent evaluation for human-on-the-loop and dark-factory delivery.</p>
+<p>The evaluator cannot operate without an expected-behavior oracle. TEA resolves this by compiling a sealed <strong>Eval Contract</strong> from the product spec before implementation. The execution agent sees that contract and black-box interfaces. It does not see the original spec, source code, repository, builder conversation, or implementation logs.</p>
+<h3 id="current-validation-requirements">Current validation requirements<a class="heading-anchor" href="#current-validation-requirements" aria-label="Link to Current validation requirements">#</a></h3>
+<h4>VFR-1: Detect eval-relevant work</h4>
+<p>TEA identifies AI-agent, LLM, probabilistic, or otherwise nondeterministic behavior in BMad planning artifacts and recommends an eval strategy proportionate to risk.</p>
+<h4>VFR-2: Compile a sealed Eval Contract</h4>
+<p>Before implementation begins, TEA converts the product spec into a versioned Eval Contract containing behavior goals, requirement and risk identifiers, oracles and rubrics, permitted black-box interfaces, test-data and cleanup rules, safety limits, budgets, and evidence requirements. The contract contains no prescribed action sequence.</p>
+<h4>VFR-3: Isolate the evaluator</h4>
+<p>The independent evaluator runs in a separate workspace with allowlisted tools and mounts. It receives only the sealed Eval Contract, scoped credentials and test data, and black-box access through the public UI, API, CLI, or MCP interface. Every run records an isolation manifest. Any prohibited-input access invalidates the run.</p>
+<h4>VFR-4: Evaluate adaptively</h4>
+<p>The independent evaluator chooses its own actions to investigate contract goals and risks. Existing deterministic and pre-canned tests remain baseline evidence. They do not prescribe the evaluator&#39;s path.</p>
+<h4>VFR-5: Produce governed evidence</h4>
+<p>The evaluator emits traceable findings, confidence, observed evidence, and a PASS / CONCERNS / FAIL recommendation. Low-confidence or ambiguous findings route to a human-on-the-loop decision rather than silently blocking or passing the change.</p>
+<h4>VFR-6: Reuse an existing engine</h4>
+<p>Execution, trace capture, standard checks, repeated runs, reports, and CI integration come from the selected open-source engine. eval-quality owns the methodology, isolation contract, governance, and any semantic evaluators that pass validation.</p>
+<h3 id="current-user-journey">Current user journey<a class="heading-anchor" href="#current-user-journey" aria-label="Link to Current user journey">#</a></h3>
+<p>TEA reads a BMad product spec, recognizes eval-relevant behavior, and freezes an Eval Contract. A builder agent implements the change with normal spec and repository access. A separate evaluator agent receives only the Eval Contract and black-box access to the resulting system. The resulting product may itself be agentic or conventional. The evaluator explores adaptively, produces evidence, and feeds a human-on-the-loop or automated release gate.</p>
+<p>Sections below preserve the original candidate engine requirements for traceability. They are research inputs. They do not authorize production implementation where they conflict with this section or the validation plan.</p>
+<h2 id="section-0-document-purpose">0. Document Purpose<a class="heading-anchor" href="#section-0-document-purpose" aria-label="Link to 0. Document Purpose">#</a></h2>
+<p>This PRD preserves the original engine proposal and records why it is blocked. The product brief lives at <code>../../briefs/brief-eval-quality-2026-07-17/brief.md</code>. The validation plan is the current execution document. A replacement implementation PRD will follow only after the experiment decision.</p>
+<h2 id="section-1-archived-vision">1. Archived Vision<a class="heading-anchor" href="#section-1-archived-vision" aria-label="Link to 1. Archived Vision">#</a></h2>
+<p><code>eval-quality</code> is a provider-agnostic TypeScript library that drives an AI agent against a task, captures the full transcript, and scores the <strong>Trajectory</strong> as <strong>Evidence</strong> for a ship/don&#39;t-ship decision - not as a benchmark percentage. Its output is a Gate Verdict (PASS / CONCERNS / FAIL) backed by an inspectable, machine-readable Evidence Artifact.</p>
+<p>The wager: in AI-assisted delivery, planning and validation are the expensive, high-value ends while code generation is cheap. Deterministic software already has evidence producers at the validation end. Agent behavior remains difficult to evaluate. The current hypotheses are claim-to-evidence lineage, semantic checkpoints, process and outcome separation, and first material error attribution. The validation plan must establish whether these add value beyond existing tools.</p>
+<p>For v0 the goal is a tight, shippable engine that a TypeScript developer can adopt from the README in under 30 minutes and use to gate real agent behavior - proven by dogfooding on the <code>couture-cast</code> project and a BMAD skill&#39;s own evals.</p>
+<h2 id="section-2-archived-target-user">2. Archived Target User<a class="heading-anchor" href="#section-2-archived-target-user" aria-label="Link to 2. Archived Target User">#</a></h2>
+<h3 id="section-21-jobs-to-be-done">2.1 Jobs To Be Done<a class="heading-anchor" href="#section-21-jobs-to-be-done" aria-label="Link to 2.1 Jobs To Be Done">#</a></h3>
+<ul>
+<li>As a <strong>TypeScript engineer shipping an agent</strong>, I need to answer &quot;is this good enough to ship?&quot; with defensible evidence, not a vibe check or a single benchmark number.</li>
+<li>As a <strong>platform / QA / test-architect engineer</strong>, I need a machine-readable agent-behavior evidence artifact I can wire into a CI gate next to my other checks.</li>
+<li>As an <strong>agent/framework author</strong>, I need an eval layer that is not locked to one model provider or a hosted platform.</li>
+<li>As <strong>the maintainer</strong>, I need an engine clean enough (stable grader/report interfaces) that a methodology layer can later wrap it, and IP-clean enough to be unambiguously Apache-2.0.</li>
+</ul>
+<h3 id="section-22-non-users-v1">2.2 Non-Users (v1)<a class="heading-anchor" href="#section-22-non-users-v1" aria-label="Link to 2.2 Non-Users (v1)">#</a></h3>
+<ul>
+<li>Teams wanting a hosted dashboard / SaaS eval product (no UI or service in v0).</li>
+<li>Non-TypeScript ecosystems needing a native SDK (Python-first tools already serve them).</li>
+<li>Teams wanting a leaderboard/benchmark score as the deliverable (eval-quality produces evidence, not rankings).</li>
+</ul>
+<h3 id="section-23-key-user-journeys">2.3 Key User Journeys<a class="heading-anchor" href="#section-23-key-user-journeys" aria-label="Link to 2.3 Key User Journeys">#</a></h3>
+<ul>
+<li><strong>UJ-1. Dana gates an agent change in CI.</strong> Dana opens a PR that changes an agent prompt. An existing engine runs the suite. eval-quality supplies the methodology and validated semantic evaluators. The result identifies unsupported claims with trace evidence and produces a governed gate decision.</li>
+<li><strong>UJ-2. Sam wires eval-quality into the release gate.</strong> Sam, a test-architect, consumes the machine-readable Evidence Artifact from an eval-quality Run and maps PASS/CONCERNS/FAIL into the team&#39;s existing gate alongside unit/contract/E2E evidence - without eval-quality dictating the gate policy.</li>
+<li><strong>UJ-3. Murat dogfoods on couture-cast.</strong> Murat labels couture-cast traces, compares the two baselines with the prototypes, and determines whether semantic checkpoints accept valid alternate paths while rejecting unsound ones.</li>
+<li><strong>UJ-4. Frankie swaps the provider.</strong> Frankie, an agent-framework author, has an eval-quality suite running against the Anthropic Adapter and needs it provider-neutral. Frankie supplies a different Driver/Judge Adapter (or the test/fake Adapter) and re-runs the same Tasks, Assertions, and Graders unchanged - no task or grader code edits - confirming the eval layer is not locked to one model vendor. Exercises FR-2; validated by SM-5.</li>
+</ul>
+<h2 id="section-3-archived-glossary">3. Archived Glossary<a class="heading-anchor" href="#section-3-archived-glossary" aria-label="Link to 3. Archived Glossary">#</a></h2>
+<ul>
+<li><strong>Task</strong>: A single unit of work given to an agent, plus the inputs/context needed to attempt it. The subject of evaluation.</li>
+<li><strong>Run</strong>: One execution of the harness over a Task (or a suite of Tasks), producing a Transcript and graded results. May include multiple attempts (see pass@k).</li>
+<li><strong>Adapter</strong>: A pluggable implementation of the driver and/or judge interface for a specific provider. Makes eval-quality provider-agnostic. <strong>Anthropic</strong> ships first.</li>
+<li><strong>Driver</strong>: The Adapter role that executes the agent against a Task and yields a Transcript.</li>
+<li><strong>Judge</strong>: The Adapter role that invokes an LLM to render a judgment for graders that require one.</li>
+<li><strong>Transcript</strong>: The complete, structured capture of a Run: ordered Steps, Tool Calls (name, params), observations/results, and the final answer.</li>
+<li><strong>Step</strong>: One discrete action in a Transcript (e.g., a Tool Call and its observation, or the final answer emission).</li>
+<li><strong>Tool Call</strong>: An invocation the agent makes to an external capability, with a name and parameters.</li>
+<li><strong>Trajectory</strong>: The path the agent took: the ordered sequence of Steps/Tool Calls leading to its answer. The primary object eval-quality scores.</li>
+<li><strong>Claim</strong>: An assertion of fact in the agent&#39;s answer that can be checked against Evidence.</li>
+<li><strong>Evidence</strong>: Something the agent actually observed during the Run (a Tool Call result, provided context) that a Claim can be traced to.</li>
+<li><strong>Assertion</strong>: A deterministic check expressed via the <code>Expect.*</code> DSL over the Transcript (tool calls, sequence, params, budgets).</li>
+<li><strong>Grader</strong>: A component that scores some aspect of a Run and emits a result. Deterministic graders run first; Judge-backed graders run second.</li>
+<li><strong>Faithfulness / Grounding</strong>: A trajectory Grader: the degree to which each Claim in the answer traces to observed Evidence. Ungrounded Claims are the signal.</li>
+<li><strong>Path Quality</strong>: A trajectory Grader: soundness, efficiency, and non-redundancy of the Trajectory.</li>
+<li><strong>Process-vs-Outcome</strong>: Judging that distinguishes correctness of the answer from soundness of the Trajectory (e.g., &quot;right answer, wrong reasons&quot;).</li>
+<li><strong>Reference Trajectory</strong>: An author-provided exemplar Trajectory for a Task, used for comparison.</li>
+<li><strong>Semantic Checkpoint Scoring</strong>: Scoring required path dependencies through an accepted-path set or dependency graph so valid alternate trajectories can pass. The mechanism is an experiment subject under H2.</li>
+<li><strong>pass@k</strong>: Running a Task k times and aggregating results to reason about a distribution of behavior rather than one draw.</li>
+<li><strong>Cost Budget</strong>: A per-Run (and/or per-Task) cost ceiling; the engine accounts spend against it and reports it.</li>
+<li><strong>Evidence Artifact</strong>: The machine-readable result of a Run, designed to feed a gate/CI.</li>
+<li><strong>Evidence Report</strong>: The human-readable summary of a Run.</li>
+<li><strong>Gate Verdict</strong>: The ship/don&#39;t-ship signal derived from a Run: <strong>PASS / CONCERNS / FAIL</strong>.</li>
+</ul>
+<h2 id="section-4-archived-candidate-features">4. Archived Candidate Features<a class="heading-anchor" href="#section-4-archived-candidate-features" aria-label="Link to 4. Archived Candidate Features">#</a></h2>
+<p>The features in this section describe the superseded standalone engine proposal. During validation, only FR-6 and FR-7 supply research questions. H3 and H4 from the validation plan complete the four-hypothesis set. The remaining FRs are expected to come from the selected existing engine.</p>
+<h3 id="section-41-provider-agnostic-runner-adapters">4.1 Provider-Agnostic Runner &amp; Adapters<a class="heading-anchor" href="#section-41-provider-agnostic-runner-adapters" aria-label="Link to 4.1 Provider-Agnostic Runner &amp; Adapters">#</a></h3>
+<p><strong>Description:</strong> The harness drives an agent against a Task and captures a complete, structured Transcript. Driver and Judge sit behind an Adapter interface so eval-quality is provider-agnostic by construction; the <strong>Anthropic</strong> Adapter ships first. Realizes UJ-1, UJ-3, UJ-4.</p>
+<p><strong>Functional Requirements:</strong></p>
+<h4>FR-1: Drive a Task and capture a Transcript</h4>
+<p>A caller can run a Task through a configured Driver Adapter and receive a structured Transcript. Realizes UJ-1.</p>
+<p><strong>Consequences (testable):</strong></p>
+<ul>
+<li>The Transcript contains ordered Steps, each Tool Call with its name and parameters, each observation/result, and the final answer, normalized to a provider-neutral core shape (Open Question 6, §8); one untyped <code>raw</code> passthrough field per Step carries provider-native detail that core Assertions/Graders never read.</li>
+<li>The Transcript is serializable to a stable, documented schema (JSON) and round-trips without loss.</li>
+<li>A Run with zero Tool Calls (direct answer) still produces a well-formed Transcript.</li>
+</ul>
+<h4>FR-2: Provider-agnostic Adapter interface</h4>
+<p>A caller can supply a Driver and/or Judge Adapter conforming to a public interface; swapping Adapters requires no change to Task, Assertion, or Grader code. Realizes UJ-4.</p>
+<p><strong>Consequences (testable):</strong></p>
+<ul>
+<li>An Anthropic Adapter is provided and covered by tests (against a mock/recorded transport by default).</li>
+<li>A test/fake Adapter can be injected to run the full pipeline with no network calls.</li>
+<li>Adapter selection is explicit configuration; no provider SDK is imported at the library&#39;s top level / entry path unless that Adapter is used.</li>
+<li>Before the first Task runs, the Adapter performs a one-time connection/auth pre-flight check and fails fast with a classified error (e.g. certificate/TLS, network, auth, rate-limit, response-parse) rather than surfacing a raw SDK stack trace on the Nth Task of a suite. Directly protects SM-4 (time-to-first-eval); an opaque failure on first use is the most common way that metric gets missed.</li>
+</ul>
+<p><strong>Out of Scope:</strong></p>
+<ul>
+<li>Additional provider Adapters beyond Anthropic (interface exists; more come later).</li>
+</ul>
+<h3 id="section-42-expect-assertion-dsl">4.2 <code>Expect.*</code> Assertion DSL<a class="heading-anchor" href="#section-42-expect-assertion-dsl" aria-label="Link to 4.2 Expect.* Assertion DSL">#</a></h3>
+<p><strong>Description:</strong> A typed, readable DSL for deterministic Assertions over a Transcript: tool calls, sequence, parameters, and performance/cost budgets. These are the checks a gate can trust without a model in the loop. Realizes UJ-1.</p>
+<p><strong>Functional Requirements:</strong></p>
+<h4>FR-3: Assert on tool calls, sequence, and parameters</h4>
+<p>A caller can assert that specific Tool Calls occurred, in a required relative order, with matching parameters. Realizes UJ-1.</p>
+<p><strong>Consequences (testable):</strong></p>
+<ul>
+<li>Assertions support presence (&quot;tool X was called&quot;), ordering (relative sequence), and parameter matching (exact and predicate-based).</li>
+<li>Sequence assertions score partial credit via longest-common-subsequence matching rather than requiring an exact contiguous match, so extra or interleaved Tool Calls the agent legitimately made don&#39;t fail an otherwise-correct sequence.</li>
+<li>A failed Assertion yields a structured, human-readable diff (expected vs. actual) in the result - not just a boolean.</li>
+<li>Assertions are pure functions of the Transcript (no side effects, deterministic).</li>
+</ul>
+<h4>FR-4: Assert on performance and cost budgets</h4>
+<p>A caller can assert that a Run stayed within a step-count, latency, and/or Cost Budget. Realizes UJ-1.</p>
+<p><strong>Consequences (testable):</strong></p>
+<ul>
+<li>Exceeding a declared budget produces a failing Assertion with the measured value and the ceiling.</li>
+<li>Budget Assertions compose with the Cost Budget accounting in FR-8.</li>
+</ul>
+<h3 id="section-43-grader-pipeline-deterministic-first-judge-second">4.3 Grader Pipeline (Deterministic-First, Judge-Second)<a class="heading-anchor" href="#section-43-grader-pipeline-deterministic-first-judge-second" aria-label="Link to 4.3 Grader Pipeline (Deterministic-First, Judge-Second)">#</a></h3>
+<p><strong>Description:</strong> A pipeline that runs cheap, reproducible deterministic Graders first and invokes Judge-backed Graders only where genuine judgment is required, keeping cost and flake down. Realizes UJ-1.</p>
+<p><strong>Functional Requirements:</strong></p>
+<h4>FR-5: Ordered deterministic-first, judge-second execution</h4>
+<p>A caller can compose a pipeline of Graders that executes deterministic Graders before Judge-backed Graders, with configurable short-circuiting on deterministic failure. Realizes UJ-1.</p>
+<p><strong>Consequences (testable):</strong></p>
+<ul>
+<li>Given a deterministic failure with short-circuit enabled, no Judge (LLM) call is made.</li>
+<li>If the Driver produced no usable final answer (a Run-level crash, not merely a failed Assertion), Judge-backed Graders are skipped entirely and reported as skipped rather than scored; there is nothing for a Judge to evaluate, and it should not be charged for or scored as a low pass.</li>
+<li>Each Grader emits a structured result (id, score/verdict, rationale, evidence pointers) merged into the Run result.</li>
+<li>The pipeline accepts caller-supplied <strong>commodity Graders</strong> - a holistic LLM-as-judge Grader and an efficiency-metrics Grader ship in-box as opt-in, non-default Graders (tool-call correctness is already covered deterministically by FR-3). These are supported so the Non-Goals promise of &quot;supported, not the pitch&quot; is backed by a real interface, but none is on the default path.</li>
+<li>The pipeline is deterministic given the same Transcript and fixed Judge outputs (injectable for tests).</li>
+</ul>
+<h3 id="section-44-candidate-semantic-evaluators">4.4 Candidate Semantic Evaluators<a class="heading-anchor" href="#section-44-candidate-semantic-evaluators" aria-label="Link to 4.4 Candidate Semantic Evaluators">#</a></h3>
+<p><strong>Description:</strong> These are unproven evaluator hypotheses retained for the validation experiment. They must demonstrate incremental value over both baselines before they enter a replacement PRD.</p>
+<p><strong>Functional Requirements:</strong></p>
+<h4>FR-6: Claim-to-Evidence Lineage Evaluator</h4>
+<p>A caller can grade whether each Claim in the agent&#39;s answer traces to observed Evidence in the Transcript. Realizes UJ-1.</p>
+<p><strong>Consequences (testable):</strong></p>
+<ul>
+<li>The grader decomposes the answer into discrete Claims and, per Claim, emits grounded / ungrounded (or a graded score) with a pointer to the supporting Evidence when grounded.</li>
+<li>On a curated fixture where the answer contains a fabricated (ungrounded) Claim, the grader flags that Claim while an output-only equality check passes.</li>
+<li>The grader judges Claims against observed Evidence, not against the agent&#39;s stated reasoning narrative.</li>
+</ul>
+<h4>FR-7: Semantic Checkpoint Evaluator</h4>
+<p>A caller can grade a Trajectory against an author-provided Reference Trajectory by path soundness/quality rather than exact step match. Also provides Path Quality and Process-vs-Outcome judgments. Realizes UJ-3.</p>
+<p><strong>Candidate scoring mechanisms:</strong> represent required checkpoints as either an accepted-path set or an explicit dependency graph. Compare both mechanisms during the pilot. LCS remains an exact-sequence baseline and may not be described as partial-order enforcement. Use a Judge-scored soundness rubric only for residual questions that deterministic checkpoint evaluation cannot resolve. Report structural and judgment findings separately.</p>
+<p><strong>Consequences (testable):</strong></p>
+<ul>
+<li>On a fixture, a valid alternate path that satisfies all required checkpoints in a valid partial order passes; a path that skips a required checkpoint or takes an unsound detour fails - where an exact-match check would fail both.</li>
+<li>The checkpoint-satisfaction layer is a pure, deterministic function of the Transcript + Reference Trajectory (same inputs → same ratio, every time); only the soundness rubric consults the Judge.</li>
+<li>Process-vs-Outcome is reported as two distinct signals (outcome correctness vs. path soundness), so &quot;right answer / wrong reasons&quot; is distinguishable from &quot;wrong answer / sound process.&quot;</li>
+<li>Path Quality reports soundness/efficiency/redundancy signals over the Trajectory.</li>
+</ul>
+<p><strong>Notes:</strong></p>
+<ul>
+<li><code>[NOTE FOR PM]</code> Judge-backed prototype evaluators require frozen prompts, model snapshots, thresholds, and repeated-run stability measurement.</li>
+</ul>
+<h3 id="section-45-passk-aggregation">4.5 pass@k Aggregation<a class="heading-anchor" href="#section-45-passk-aggregation" aria-label="Link to 4.5 pass@k Aggregation">#</a></h3>
+<p><strong>Description:</strong> Runs a Task k times and aggregates results so a Gate reasons about a distribution of behavior, not a single draw. Realizes UJ-1.</p>
+<p><strong>Functional Requirements:</strong></p>
+<h4>FR-8a: Aggregate k attempts</h4>
+<p><em>(FR-8a is intentionally sequenced before FR-8: pass@k was inserted after FR-8 already existed, and the suffix preserves stable FR IDs rather than renumbering. Read order is FR-8a then FR-8.)</em></p>
+<p>A caller can run a Task k times and receive an aggregated result (e.g., pass rate, per-attempt breakdown). Realizes UJ-1.</p>
+<p><strong>Consequences (testable):</strong></p>
+<ul>
+<li>With k attempts, the result reports how many passed each Grader and an aggregate suitable for the Gate.</li>
+<li>The case-level pass criterion is pluggable (e.g. <code>all</code> attempts pass, <code>any</code> attempt passes, or a <code>minPassRate</code> threshold) rather than a single hard-coded aggregation rule, so &quot;does this ever flake&quot; and &quot;is this reliable enough&quot; can be asked separately.</li>
+<li>k=1 behaves identically to a single Run (no aggregation overhead changes the verdict).</li>
+</ul>
+<h3 id="section-46-cost-budget-accounting">4.6 Cost Budget Accounting<a class="heading-anchor" href="#section-46-cost-budget-accounting" aria-label="Link to 4.6 Cost Budget Accounting">#</a></h3>
+<p><strong>Description:</strong> Treats evaluation cost as first-class: each Run accounts spend and reports it against a budget, and can stop a Run before it overspends, not just report the overspend afterward. Realizes UJ-1.</p>
+<p><strong>Functional Requirements:</strong></p>
+<h4>FR-8: Account and report Run cost against a budget</h4>
+<p>A caller can set a Cost Budget and have the Run report actual spend against it. Realizes UJ-1, UJ-2.</p>
+<p><strong>Consequences (testable):</strong></p>
+<ul>
+<li>Every Run result includes a cost figure (token/where-available pricing) attributable to Driver and Judge calls.</li>
+<li>When a Cost Budget is set and exceeded, the result flags it (and can fail via FR-4).</li>
+<li>Independent of that reporting, the Cost Budget is enforced as a hard, charge-as-you-go circuit breaker: the next Driver/Judge call that would exceed the ceiling is refused <em>before</em> it is made, not detected after the spend already happened. A single runaway tool-loop therefore cannot blow a whole suite&#39;s budget, not just one Task&#39;s.</li>
+<li>The circuit breaker is shareable across Runs within one process/worker (e.g. a whole suite invocation), so the ceiling can be scoped per-Task or per-suite at the caller&#39;s discretion.</li>
+</ul>
+<h3 id="section-47-evidence-reporting-gate-verdict">4.7 Evidence Reporting &amp; Gate Verdict<a class="heading-anchor" href="#section-47-evidence-reporting-gate-verdict" aria-label="Link to 4.7 Evidence Reporting &amp; Gate Verdict">#</a></h3>
+<p><strong>Description:</strong> Every Run emits a human-readable Evidence Report and a machine-readable Evidence Artifact, and derives a Gate Verdict (PASS / CONCERNS / FAIL). Realizes UJ-1, UJ-2.</p>
+<p><strong>Functional Requirements:</strong></p>
+<h4>FR-9: Emit human + machine-readable evidence</h4>
+<p>A Run produces both an Evidence Report (human summary) and an Evidence Artifact (machine-readable) covering Assertions, Grader results, pass@k aggregate, and cost. Realizes UJ-1, UJ-2.</p>
+<p><strong>Consequences (testable):</strong></p>
+<ul>
+<li>The Evidence Artifact conforms to a documented, versioned schema and is consumable by a CI step without parsing human text.</li>
+<li>The Evidence Report cites, per finding, the Steps/Claims/Evidence involved (inspectable, not just a score).</li>
+<li>A Judge-backed Grader that returns an unparseable/malformed response is reported as a distinct <code>judge_error</code> status, never conflated with a low or zero score; a broken judge and a legitimately bad Trajectory must be visibly different failures.</li>
+</ul>
+<h4>FR-10: Derive a Gate Verdict</h4>
+<p>A Run derives a PASS / CONCERNS / FAIL Gate Verdict from configurable policy over Grader/Assertion results. Realizes UJ-2.</p>
+<p><strong>Consequences (testable):</strong></p>
+<ul>
+<li>Verdict mapping is configurable by the consumer (eval-quality supplies a sensible default, does not hard-code gate policy).</li>
+<li>Default policy (Open Question 5, §8): FAIL on any deterministic Assertion failure or pass@k below <code>minPassRate</code>; CONCERNS if a Judge-backed Grader flagged an issue with no deterministic failure; PASS otherwise.</li>
+<li>The same results + same policy always yield the same Verdict (deterministic).</li>
+</ul>
+<h3 id="section-48-cli">4.8 CLI<a class="heading-anchor" href="#section-48-cli" aria-label="Link to 4.8 CLI">#</a></h3>
+<p><strong>Description:</strong> This archived proposal described a thin command-line wrapper over the library. The current direction uses the selected engine&#39;s CLI and CI contract. eval-quality methodology can orchestrate that existing interface.</p>
+<p><strong>Functional Requirements:</strong></p>
+<h4>FR-11: Run an eval from the command line</h4>
+<p>A caller can invoke a CLI command to run a Task or suite and receive the Evidence Artifact plus a process exit code reflecting the Gate Verdict, without writing a test file first. Realizes UJ-1, UJ-2.</p>
+<p><strong>Consequences (testable):</strong></p>
+<ul>
+<li>The command runs non-interactively by default (no prompts) - required for it to be callable headlessly from CI or from an orchestrated TEA workflow run.</li>
+<li>The exit code reflects the Gate Verdict (e.g. 0 on PASS, nonzero on CONCERNS/FAIL, configurable strictness); JSON and JUnit output are supported for CI consumption.</li>
+<li>Output conforms to the same versioned Evidence Artifact schema as FR-9; the CLI is a caller of the library, not an alternate implementation.</li>
+</ul>
+<h4>FR-12: Scaffold a new eval via CLI</h4>
+<p>A caller can run a scaffold/init command to generate a starter eval spec and Reference Trajectory stub for a Task. Realizes UJ-3.</p>
+<p><strong>Consequences (testable):</strong></p>
+<ul>
+<li>Generates a minimal, typed eval file plus a Reference Trajectory stub in the documented authoring format (ties to Open Question 3).</li>
+<li>Designed as the shell-out target for eval-quality methodology and scaffolding. The current direction delegates this interface to the selected engine.</li>
+</ul>
+<p><strong>Notes:</strong></p>
+<ul>
+<li><code>[ASSUMPTION]</code> The CLI ships in v0 (this reverses the earlier &quot;library-first, no CLI&quot; assumption - see §9).</li>
+</ul>
+<h2 id="section-5-non-goals-explicit">5. Non-Goals (Explicit)<a class="heading-anchor" href="#section-5-non-goals-explicit" aria-label="Link to 5. Non-Goals (Explicit)">#</a></h2>
+<ul>
+<li>No standalone eval engine during validation.</li>
+<li>No runner, provider adapter framework, assertion DSL, pass@k engine, cost engine, reporting framework, CLI, or CI engine.</li>
+<li>No engine fork.</li>
+<li>No hosted service, dashboard, or GUI.</li>
+<li>No production npm API or compatibility promise.</li>
+<li>No benchmark or leaderboard as the deliverable.</li>
+<li>No judging chain-of-thought prose as a scored signal.</li>
+<li>No claim that grounding establishes external truth.</li>
+<li>No differentiation claim before a capability passes the preregistered gate.</li>
+</ul>
+<h2 id="section-6-hypothesis-validation-scope">6. Hypothesis Validation Scope<a class="heading-anchor" href="#section-6-hypothesis-validation-scope" aria-label="Link to 6. Hypothesis Validation Scope">#</a></h2>
+<h3 id="section-61-in-scope">6.1 In Scope<a class="heading-anchor" href="#section-61-in-scope" aria-label="Link to 6.1 In Scope">#</a></h3>
+<ul>
+<li>The 8-trace pilot corpus and 48-trace confirmatory corpus defined in the validation plan.</li>
+<li>The 12-task independent-evaluator experiment defined under H0.</li>
+<li>One agentic system and one conventional UI, API, or CLI system in the H0 task set.</li>
+<li>A sealed Eval Contract and auditable isolation manifest for every H0 task.</li>
+<li>Independent human labels and adjudication.</li>
+<li>Strong baseline configurations for <code>agentevals-dev/agentevals</code> and Promptfoo.</li>
+<li>Four disposable custom evaluator prototypes: claim-to-evidence lineage, semantic checkpoints, process and outcome separation, and first material error attribution.</li>
+<li>Repeated-run stability measurement.</li>
+<li>A comparative results summary and recorded product decision.</li>
+</ul>
+<h3 id="section-62-exit-decisions">6.2 Exit Decisions<a class="heading-anchor" href="#section-62-exit-decisions" aria-label="Link to 6.2 Exit Decisions">#</a></h3>
+<ul>
+<li><strong>DARK-FACTORY VALIDATED:</strong> H0 passes. eval-quality may advance independent black-box evaluation to design-partner validation for human-on-the-loop and dark-factory delivery.</li>
+<li><strong>DARK-FACTORY REJECTED:</strong> H0 fails. TEA still supports conventional eval best practices, and the dark-factory claim is removed.</li>
+<li><strong>BUILD THIN PACK:</strong> At least two hypotheses pass every required gate. Write a replacement PRD containing only those evaluators and the <code>eval-quality</code> methodology layer.</li>
+<li><strong>NARROW AND REPEAT:</strong> Exactly one hypothesis passes. Run a second confirmatory corpus for that evaluator before creating a production PRD.</li>
+<li><strong>METHODOLOGY ONLY:</strong> No hypothesis passes, or the safety gate fails. Retain <code>eval-quality</code> as agents, rules, methodology, and governance over existing engines.</li>
+</ul>
+<h2 id="section-7-success-metrics">7. Success Metrics<a class="heading-anchor" href="#section-7-success-metrics" aria-label="Link to 7. Success Metrics">#</a></h2>
+<ul>
+<li><strong>SM-D1:</strong> The independent evaluator catches at least 3 real, material defects missed by both self-evaluation and deterministic tests, spanning the agentic and conventional systems under test.</li>
+<li><strong>SM-D2:</strong> Independent-evaluator precision reaches at least 0.85 and recall reaches at least 0.80.</li>
+<li><strong>SM-D3:</strong> Clean implementations receive zero false FAIL verdicts and at most one false CONCERNS verdict.</li>
+<li><strong>SM-D4:</strong> At least one defect is found through an evaluator-chosen action absent from the pre-canned baseline.</li>
+<li><strong>SM-D5:</strong> Every H0 run has a complete isolation manifest and zero prohibited-input accesses.</li>
+<li><strong>SM-D6:</strong> At least one H0 finding changes a real ship decision or materially changes remediation.</li>
+<li><strong>SM-1:</strong> At least 3 real, material failures missed by both baselines are caught by the prototypes.</li>
+<li><strong>SM-2:</strong> Incremental catches span at least 2 hypotheses and both agent systems.</li>
+<li><strong>SM-3:</strong> Every evaluator proposed for packaging reaches at least 0.85 precision and 0.80 recall.</li>
+<li><strong>SM-4:</strong> Valid grounded behavior receives zero false FAIL verdicts and at most one false CONCERNS verdict.</li>
+<li><strong>SM-5:</strong> Judge-backed verdict stability reaches at least 0.90 across three repeated runs.</li>
+<li><strong>SM-6:</strong> First material error attribution reaches at least 0.70 exact-step agreement and 0.85 adjacent-step agreement if proposed for packaging.</li>
+<li><strong>SM-7:</strong> At least one finding changes a real ship decision or materially changes remediation.</li>
+<li><strong>SM-8:</strong> Every passing evaluator runs through a public extension point without an engine fork.</li>
+<li><strong>SM-9:</strong> After a technical pass, at least 3 organizations commit traces, engineering time, or a design-partner pilot.</li>
+</ul>
+<p>The validation plan defines each metric, corpus quota, labeling rule, and stop condition. Those definitions may not change after confirmatory results are visible.</p>
+<h2 id="section-8-archived-engine-decisions">8. Archived Engine Decisions<a class="heading-anchor" href="#section-8-archived-engine-decisions" aria-label="Link to 8. Archived Engine Decisions">#</a></h2>
+<p>The decisions below belonged to the original engine proposal. They are preserved for traceability and are inactive until a replacement PRD explicitly adopts them.</p>
+<ol>
+<li><strong>Judge calibration.</strong> The Judge is pinned to an exact model version, never &quot;latest,&quot; and must never be the same or a weaker tier than the Driver under test (no self-judging). Judge prompts and pass/fail thresholds are versioned fixtures in-repo; a Judge/prompt change only ships if it doesn&#39;t regress the calibration fixture set already required for SM-2/SM-3. Thresholds are an empirically-set default, not a v0 config surface.</li>
+<li><strong>Claim decomposition.</strong> Hybrid, biased to rule-based: deterministic sentence/clause segmentation produces the claim list (unit-testable - same answer string, same claims, every time); the Judge is invoked only to decide grounded/ungrounded per already-segmented Claim, never to do the segmentation itself. Full judge-based decomposition is non-deterministic and rejected for v0.</li>
+<li><strong>Reference Trajectory authoring format.</strong> A plain typed TypeScript object, not a DSL or YAML: an ordered checkpoint list (required Tool Calls with predicate-matchable params, reusing the <code>Expect.tools.*</code> matcher vocabulary) plus the expected final-answer shape - not a full recorded transcript. Bar: authoring one must take less effort than the equivalent output-only Assertion.</li>
+<li><strong>Evidence Artifact schema versioning.</strong> This archived proposal used a <code>schemaVersion</code> integer independent of package SemVer. The experiment will preserve raw engine output and define only the minimal evaluator-result schema required for comparison.</li>
+<li><strong>Default Gate Verdict policy.</strong> FAIL on any deterministic Assertion failure or pass@k below the caller&#39;s <code>minPassRate</code>; CONCERNS if a Judge-backed Grader (Faithfulness, Path-Invariant) flagged an issue with no deterministic failure; PASS otherwise. Deterministic failures are hard; Judge-backed findings are a flag, not a block. Ships as the literal, documented default function (FR-10) - no hidden weighting - and remains consumer-overridable.</li>
+<li><strong>Transcript schema.</strong> Normalize to the provider-neutral core every Assertion/Grader reads (ordered Steps, Tool Call name/params, result, final answer, cost), plus one untyped <code>raw</code> passthrough field per Step for provider-native detail. Core Assertions/Graders never read <code>raw</code> - preserves neutrality without discarding data a future Adapter might need.</li>
+</ol>
+<h2 id="section-9-archived-assumptions-index">9. Archived Assumptions Index<a class="heading-anchor" href="#section-9-archived-assumptions-index" aria-label="Link to 9. Archived Assumptions Index">#</a></h2>
+<ul>
+<li>§1/§2 - [ASSUMPTION] Primary users are TS agent teams + platform/test-architect engineers; secondary are framework authors and the maintainer&#39;s own projects.</li>
+<li>§2.3 - [ASSUMPTION] CI is the dominant execution surface for v0 (vs. interactive/local-only).</li>
+<li>§4.1 FR-2 - [ASSUMPTION] Provider SDKs are loaded lazily per-Adapter so the core stays dependency-light and provider-neutral.</li>
+<li>§4.4 FR-6 - [ASSUMPTION] Faithfulness is scored against observed Evidence, and reasoning-prose judging is intentionally excluded.</li>
+<li>§4.4 FR-7 - [ASSUMPTION] Reference Trajectories are author-provided per Task (not auto-derived) in v0.</li>
+<li>§6 - [ASSUMPTION] &quot;Shippable v0&quot; = the FR set above with fixtures, not a broader feature surface.</li>
+<li>§4.8 FR-11/FR-12 - [ASSUMPTION] A thin CLI ships in v0 as a wrapper over the library (reverses the prior &quot;library-first, no CLI&quot; assumption - driven first by CI/headless runners needing a shell-invokable, non-interactive entry point rather than a TypeScript import, and secondarily by the future TEA layer having the same need).</li>
+</ul>
+<hr>
+<h2 id="archived-developer-product-requirements">Archived Developer-Product Requirements<a class="heading-anchor" href="#archived-developer-product-requirements" aria-label="Link to Archived Developer-Product Requirements">#</a></h2>
+<p><em>This is a library; the following cross-cutting requirements apply.</em></p>
+<h3 id="api-contracts-public-surface">API Contracts / Public Surface<a class="heading-anchor" href="#api-contracts-public-surface" aria-label="Link to API Contracts / Public Surface">#</a></h3>
+<ul>
+<li>Public surface: <code>Expect.*</code> DSL, Adapter interface, Grader/pipeline API, Run/Task entry point, Evidence Artifact/Report types, Gate Verdict, and the CLI (run + scaffold commands, their flags, and their exit-code contract). These are the stable contract.</li>
+<li>The Evidence Artifact is a versioned schema (see Open Question 4); breaking changes to it, the Adapter interface, or the CLI&#39;s command/flag/exit-code contract follow the versioning policy below.</li>
+<li>Types are exported from the package entry (<code>dist/index.d.ts</code>); the engine is usable programmatically, and the CLI (FR-11, FR-12) is a thin wrapper over that same programmatic surface, not a second implementation.</li>
+</ul>
+<h3 id="versioning-deprecation-policy">Versioning &amp; Deprecation Policy<a class="heading-anchor" href="#versioning-deprecation-policy" aria-label="Link to Versioning &amp; Deprecation Policy">#</a></h3>
+<ul>
+<li>SemVer. Pre-1.0 (0.x): minor may break, documented in CHANGELOG; the Adapter interface, Evidence Artifact schema, and CLI command/flag/exit-code contract are called out on every change.</li>
+<li>Evidence Artifact carries a schema version field so CI consumers can detect incompatibility.</li>
+</ul>
+<h3 id="performance-budgets">Performance Budgets<a class="heading-anchor" href="#performance-budgets" aria-label="Link to Performance Budgets">#</a></h3>
+<ul>
+<li>Deterministic-first: Judge (LLM) calls are a minority of total cost/time on the dogfood suite (SM-6).</li>
+<li>pass@k must not multiply Judge cost unnecessarily; deterministic short-circuit applies per attempt.</li>
+</ul>
+<h3 id="language-runtime-targets-dependency-policy">Language / Runtime Targets &amp; Dependency Policy<a class="heading-anchor" href="#language-runtime-targets-dependency-policy" aria-label="Link to Language / Runtime Targets &amp; Dependency Policy">#</a></h3>
+<ul>
+<li>TypeScript, Node &gt;= 20, ESM (<code>&quot;type&quot;: &quot;module&quot;</code>).</li>
+<li>Apache-2.0; unscoped npm name <code>eval-quality</code>.</li>
+<li><strong>Dependencies:</strong> permissively licensed only (MIT / Apache-2.0); no copyleft or proprietary dependencies.</li>
+<li>Core dependency-light; provider SDKs pulled in only by their Adapter, not the core entry path.</li>
+</ul>
+<h3 id="constraints-guardrails">Constraints &amp; Guardrails<a class="heading-anchor" href="#constraints-guardrails" aria-label="Link to Constraints &amp; Guardrails">#</a></h3>
+<ul>
+<li><strong>Cost:</strong> every Run is cost-accounted and budgetable (FR-4, FR-8); deterministic-first minimizes spend.</li>
+<li><strong>Licensing:</strong> Apache-2.0; all dependencies permissively licensed and reviewable before release.</li>
+<li><strong>Safety:</strong> Judge prompts and grader logic must not leak Task secrets into logs/artifacts beyond what the Evidence Report needs. <code>[NOTE FOR PM]</code> confirm redaction expectations.</li>
+</ul>
+<hr>
+<h2 id="archived-appendix-downstream-depth">Archived Appendix: Downstream Depth<a class="heading-anchor" href="#archived-appendix-downstream-depth" aria-label="Link to Archived Appendix: Downstream Depth">#</a></h2>
+<p><em>(Depth that supports architecture and epics, beyond the PRD body.)</em></p>
+<h3 id="rejected-alternatives-rationale">Rejected alternatives (rationale)<a class="heading-anchor" href="#rejected-alternatives-rationale" aria-label="Link to Rejected alternatives (rationale)">#</a></h3>
+<ul>
+<li><strong>Exact-match trajectory assertion as the lead signal</strong> - rejected: brittle, punishes valid alternate paths, breaks on prompt tweaks; teams abandon it. Kept only as an optional deterministic <code>Expect.*</code> capability, never the headline. Path-invariant reference scoring (FR-7) is the answer.</li>
+<li><strong>Judging chain-of-thought / reasoning prose</strong> - rejected as a scored signal: research indicates CoT is frequently unfaithful (stated reasoning ≠ actual computation), so scoring the narrative rewards storytelling over behavior. Judge grounding/outcome/path instead (FR-6, FR-7).</li>
+<li><strong>Holistic single LLM-judge score as the product</strong> - rejected as the pitch: commodity, low-signal for gates. Supported inside the pipeline, not led with.</li>
+<li><strong>Benchmark/percentage output</strong> - rejected: the deliverable is evidence + Gate Verdict, not a ranking.</li>
+</ul>
+<h3 id="prior-art-grounds-fr-6-fr-7-and-the-no-cot-judging-decision">Prior art (grounds FR-6 / FR-7 and the no-CoT-judging decision)<a class="heading-anchor" href="#prior-art-grounds-fr-6-fr-7-and-the-no-cot-judging-decision" aria-label="Link to Prior art (grounds FR-6 / FR-7 and the no-CoT-judging decision)">#</a></h3>
+<ul>
+<li><strong>FR-6 research prior:</strong> TRACE (arXiv 2510.02837) accumulates evidence per step. TRACE grounds the agent&#39;s thought field. eval-quality H1 evaluates final-answer claims against observed evidence. TRACE remains a design prior rather than production proof.</li>
+<li><strong>FR-7 research prior:</strong> CORE (arXiv 2509.20998) models a set of valid reference paths and scores normalized edit distance. H2 will compare accepted-path and dependency-graph mechanisms. CORE remains a design prior rather than a solved production method.</li>
+<li><strong>No CoT-prose judging:</strong> Anthropic 2505.05410, Oxford &quot;CoT Is Not Explainability&quot; (2025), BonaFide 2605.25052 (CoT-faithfulness metrics near-chance).</li>
+<li><strong>Landscape:</strong> commodity primitives are already mature. <code>agentevals-dev/agentevals</code> and Promptfoo are the experiment baselines. Any eval-quality wedge must show incremental evidence against both.</li>
+</ul>
+<h3 id="mechanism-transport-decisions-for-architecture">Mechanism / transport decisions (for architecture)<a class="heading-anchor" href="#mechanism-transport-decisions-for-architecture" aria-label="Link to Mechanism / transport decisions (for architecture)">#</a></h3>
+<ul>
+<li><strong>Adapter boundary</strong> splits Driver (executes agent → Transcript) from Judge (LLM judgment for graders). Provider SDKs are lazy-loaded per Adapter so the core entry path imports no provider SDK. Anthropic first.</li>
+<li><strong>Transcript</strong> is the single source of truth: a serializable, versioned, provider-neutral schema. All Assertions and Graders are pure functions of the Transcript (deterministic, testable with injected/fake Judge outputs).</li>
+<li><strong>Grader pipeline</strong> ordering: deterministic graders first with configurable short-circuit; Judge-backed graders second. Enables cost control (SM-6) and network-free testing (SM-5). Judge-backed graders are additionally skipped (not scored) when the Transcript shows a Driver-level crash with no usable final answer.</li>
+<li><strong>Evidence Artifact</strong> carries a schema version; Gate Verdict policy is consumer-configurable with an opinion-light default.</li>
+<li><strong>Faithfulness pipeline</strong>: answer → Claim decomposition → per-Claim grounding check against observed Evidence with Evidence pointers. Claim-decomposition strategy (rule/judge/hybrid) is Open Question 2.</li>
+<li><strong>Semantic checkpoint scoring</strong> (FR-7): compare an accepted-path set with an explicit dependency graph during the pilot. LCS is a sequence baseline and does not enforce a partial order. A Judge-scored soundness rubric may address residual questions after deterministic checkpoint evaluation. Report structural and judgment findings separately.</li>
+<li><strong>Cost circuit breaker (FR-8)</strong>: a stateful, shareable accounting object (spent/remaining/cap) that refuses the next Driver/Judge call <em>before</em> it would exceed the cap - charge-as-you-go, not measure-after. Distinct from and complementary to the soft <code>Expect.performance.maxCostUsd</code>-style assertion, which only detects overspend post-hoc. Scope the object per-process/worker so it can cover a whole suite invocation, not just one Task.</li>
+<li><strong>Connection/auth pre-flight (FR-2)</strong>: one cached check per Adapter per process, classifying failure into a small fixed set (tls/connection/auth/rate_limit/parse) with targeted remediation text per class - turns an opaque SDK exception into an actionable message on first use. If any TLS relaxation is ever needed for a corporate-proxy or self-hosted-gateway use case, scope it to a per-client transport option passed to that Adapter&#39;s SDK client, never a process-global TLS setting; a global relaxation silently weakens unrelated HTTPS traffic (Judge calls, telemetry, etc.), a per-client one doesn&#39;t.</li>
+<li><strong>Partial-credit sequence matching (FR-3)</strong>: longest-common-subsequence over the expected vs. observed Tool Call sequence, so extra or interleaved calls don&#39;t fail an otherwise-valid ordering the way an exact/contiguous match would.</li>
+<li><strong>Judge error as a distinct status (FR-9)</strong>: an unparseable/malformed Judge response is a <code>judge_error</code> enum value in the Grader result, never coerced into a numeric low score - keeps &quot;the judge broke&quot; visibly distinct from &quot;the agent did badly&quot; in the Evidence Artifact.</li>
+<li><strong>Judge tier discipline (Open Question 1)</strong>: the Judge Adapter must default to a model tier at or above the Driver&#39;s, never below; self-judging (or under-judging) is a calibration risk, not just a cost optimization.</li>
+</ul>
+<h3 id="interface-stability-rationale-why-it-matters-for-v0">Interface-stability rationale (why it matters for v0)<a class="heading-anchor" href="#interface-stability-rationale-why-it-matters-for-v0" aria-label="Link to Interface-stability rationale (why it matters for v0)">#</a></h3>
+<p>The current product boundary combines eval-quality methodology and any validated evaluator pack under one name. Existing engine contracts remain external dependencies. Stabilize a public evaluator API only after the experiment identifies a capability worth packaging.</p>
+<h3 id="testing-fixtures-dogfood-efficacy">Testing / fixtures (dogfood + efficacy)<a class="heading-anchor" href="#testing-fixtures-dogfood-efficacy" aria-label="Link to Testing / fixtures (dogfood + efficacy)">#</a></h3>
+<ul>
+<li>Faithfulness efficacy (SM-2) and path-invariance efficacy (SM-3) require curated fixtures: transcripts with injected ungrounded Claims, and pairs of (valid-alternate-path, unsound-path) against a reference. These fixtures lock grader behavior against model drift (Open Question 1).</li>
+<li>Dogfood targets: <code>couture-cast</code> agent tasks + a BMAD skill&#39;s own evals (SM-1).</li>
+</ul>
+<h3 id="additional-ideas-considered">Additional ideas considered<a class="heading-anchor" href="#additional-ideas-considered" aria-label="Link to Additional ideas considered">#</a></h3>
+<p>Beyond the mechanisms specified above, v0 deliberately favors portable, deterministic, versioned approaches over deployment-coupled configuration and brittle, unmaintainable alternatives - standard engineering hygiene, called out so the design choices are explicit rather than incidental.</p>
+<h3 id="deferred-post-v0">Deferred (post-v0)<a class="heading-anchor" href="#deferred-post-v0" aria-label="Link to Deferred (post-v0)">#</a></h3>
+<ul>
+<li>Additional provider Adapters (OpenAI, Google, local/OSS models).</li>
+<li>Cross-signal aggregation across unit/contract/E2E/perf/observability.</li>
+<li>Additional methodology automation beyond the validation experiment.</li>
+<li>Anything beyond CLI run + scaffold (interactive mode, TUI, config wizard, additional subcommands).</li>
+</ul>
+
+</article>
+      <footer class="footer">Rendered from prd.md. This file is self-contained and print-ready.</footer>
+    </main>
+  </div>
+</body>
+</html>
